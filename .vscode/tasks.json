@@ -1,0 +1,45 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🔨 Build (GCC)",
+            "type": "shell",
+            "command": "make",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "🗑️ Clean (GCC)",
+            "type": "shell",
+            "command": "make clean",
+            "problemMatcher": []
+        },
+        {
+            "label": "🔗 Connect to STM (OpenOCD)",
+            "type": "shell",
+            "command": "openocd -f interface/stlink-v2.cfg -f target/stm32f7x.cfg",
+            "problemMatcher": []
+        },
+        {
+            "label": "🛠️ Program & Verfiy STM (OpenOCD)",
+            "type": "shell",
+            "command": "openocd -f interface/stlink-v2.cfg -f target/stm32f7x.cfg -c \"program ./build/firmware.elf verify reset exit\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "↩ Reset STM (OpenOCD)",
+            "type": "shell",
+            "command": "openocd -f interface/stlink-v2.cfg -f target/stm32f7x.cfg -c init -c targets -c \"reset\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "🔗 SWO/SWV Debugger STM (OpenOCD)",
+            "type": "shell",
+            "command": "openocd -f interface/stlink-v2.cfg -c \"transport select hla_swd\" -f target/stm32f7x.cfg -c \"tpiu config external uart off 216000000 2000000\"",
+            "problemMatcher": []
+        }
+    ]
+}

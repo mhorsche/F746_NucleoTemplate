@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (OpenOCD)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "executable": "./build/firmware.elf",
+            "device": "STM32F746ZGTx",
+            "svdFile": "${workspaceRoot}/STM32F7x6.svd",
+            "cwd": "${workspaceRoot}",
+            "interface": "swd",
+            "configFiles": [
+                "interface/stlink-v2.cfg",
+                "target/stm32f7x.cfg"
+            ]
+        }
+    ]
+}
