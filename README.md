@@ -79,7 +79,7 @@ Afterwards run task `🛠️ Program & Verfiy STM (OpenOCD)` by pressing `STRG+P
 ### Printf via SWO/SWV
 
 Sadly the SWO/SWV debugging does not work in the VS Code terminal for me, therefore it is necessary to run the ST-Link Utility (https://www.st.com/en/development-tools/stsw-link004.html) and run `ST-LINK > Printf via SWO viewer`. Set the system clock to `216000000` and leave the stimulus port to `0`. Now you should see all printf messages as long you compile the project with `#define DEBUG` (`.vscode/c_cpp_properties.json` global defines in section `defines`).
-![Printf via SWO viewe](docs/images/STLink_debug.png)
+![Printf via SWO viewe](https://github.com/mhorsche/F746_NucleoTemplate/blob/master/docs/images/STLink_Debug.png)
 
 ### Debug in VS Code
 
