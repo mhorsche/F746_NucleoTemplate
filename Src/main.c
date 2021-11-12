@@ -49,23 +49,34 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+#if (USE_UART == 1)
+UART_HandleTypeDef huart;
+#endif /* USE_UART */
 
 /* Private function prototypes -----------------------------------------------*/
+#if (USE_UART == 1)
+static void VCOM_UART_Init(void);
+#endif /* USE_UART */
+
 static void SystemClock_Config(void);
-static void CPU_CACHE_Enable(void);
+static void DebugMode_Config(void);
+static void Error_Handler(void);
 
 /* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  Main program
-  * @param  None
-  * @retval None
-  */
+ * @brief  Main program
+ * @param  None
+ * @retval None
+ */
 int main(void)
 {
-  /* Enable the CPU Cache */
-  CPU_CACHE_Enable();
-  
+  /* Enable I-Cache */
+  SCB_EnableICache();
+
+  /* Enable D-Cache */
+  SCB_EnableDCache();
+
   /* This sample code shows how to use GPIO HAL API to toggle GPIOA-GPIO_PIN_5 IO
     in an infinite loop. It is possible to connect a LED between GPIOA-GPIO_PIN_5
     output and ground via a 330ohm resistor to see this external LED blink.
@@ -86,9 +97,12 @@ int main(void)
   /* Configure the system clock to 216 MHz */
   SystemClock_Config();
 
+  /* Configure debug mode to stop all timers */
+  DebugMode_Config();
+
   /* -0- Debug messag through SWO/SWV when DEBUG is defined */
   printf("Hello World!\n");
-  
+
   /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
@@ -97,7 +111,12 @@ int main(void)
   BSP_LED_Init(LED_GREEN);
   BSP_LED_Init(LED_BLUE);
 
-  /* -3- Toggle IO in an infinite loop */
+#if (USE_UART == 1)
+  /* -3- Configure the UART peripheral */
+  VCOM_UART_Init();
+#endif /* USE_UART */
+
+  /* -4- Toggle IO in an infinite loop */
   uint16_t cnt = 0;
   while (1)
   {
@@ -107,7 +126,7 @@ int main(void)
     BSP_LED_Toggle(LED_GREEN);
     printf("Green\n");
     HAL_Delay(500);
-    
+
     /* Toggle blue LED and write command via SWO/SWV */
     BSP_LED_Toggle(LED_BLUE);
     printf("Blue\n");
@@ -123,26 +142,59 @@ int main(void)
   }
 }
 
+#if (USE_UART == 1)
 /**
-  * @brief  System Clock Configuration
-  *         The system Clock is configured as follow : 
-  *            System Clock source            = PLL (HSE)
-  *            SYSCLK(Hz)                     = 216000000
-  *            HCLK(Hz)                       = 216000000
-  *            AHB Prescaler                  = 1
-  *            APB1 Prescaler                 = 4
-  *            APB2 Prescaler                 = 2
-  *            HSE Frequency(Hz)              = 8000000
-  *            PLL_M                          = 8
-  *            PLL_N                          = 432
-  *            PLL_P                          = 2
-  *            PLL_Q                          = 7
-  *            VDD(V)                         = 3.3
-  *            Main regulator output voltage  = Scale1 mode
-  *            Flash Latency(WS)              = 7
-  * @param  None
-  * @retval None
-  */
+ * @brief VCOM USART Initialization Function
+ * @param None
+ * @retval None
+ */
+static void VCOM_UART_Init(void)
+{
+  /* Put the USART peripheral in the Asynchronous mode (UART Mode) */
+  /* UART configured as follows:
+      - Word Length = 8 Bits
+      - Stop Bit    = One Stop bit
+      - Parity      = None
+      - BaudRate    = 115200 baud
+      - Hardware flow control disabled (RTS and CTS signals) */
+  huart.Instance = STLK_USART;
+  huart.Init.BaudRate = 115200;
+  huart.Init.WordLength = UART_WORDLENGTH_8B;
+  huart.Init.StopBits = UART_STOPBITS_1;
+  huart.Init.Parity = UART_PARITY_NONE;
+  huart.Init.Mode = UART_MODE_TX_RX;
+  huart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+
+  if (HAL_UART_Init(&huart) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+#endif /* USE_UART */
+
+/**
+ * @brief  System Clock Configuration
+ *         The system Clock is configured as follow : 
+ *            System Clock source            = PLL (HSE)
+ *            SYSCLK(Hz)                     = 216000000
+ *            HCLK(Hz)                       = 216000000
+ *            AHB Prescaler                  = 1
+ *            APB1 Prescaler                 = 4
+ *            APB2 Prescaler                 = 2
+ *            HSE Frequency(Hz)              = 8000000
+ *            PLL_M                          = 8
+ *            PLL_N                          = 432
+ *            PLL_P                          = 2
+ *            PLL_Q                          = 9
+ *            VDD(V)                         = 3.3
+ *            Main regulator output voltage  = Scale1 mode
+ *            Flash Latency(WS)              = 7
+ * @param  None
+ * @retval None
+ */
 static void SystemClock_Config(void)
 {
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -157,19 +209,23 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 8;
   RCC_OscInitStruct.PLL.PLLN = 432;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 7;
+  RCC_OscInitStruct.PLL.PLLQ = 9;
   ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-  
-  if(ret != HAL_OK)
+
+  if (ret != HAL_OK)
   {
-   while(1) {}; 
+    while (1)
+    {
+    };
   }
-  
-  /* Activate the OverDrive to reach the 216 MHz Frequency */  
+
+  /* Activate the OverDrive to reach the 216 MHz Frequency */
   ret = HAL_PWREx_EnableOverDrive();
-  if(ret != HAL_OK)
+  if (ret != HAL_OK)
   {
-   while(1) {};
+    while (1)
+    {
+    };
   }
 
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 
@@ -177,30 +233,67 @@ static void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;  
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;  
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
   ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
-  if(ret != HAL_OK)
+  if (ret != HAL_OK)
   {
-   while(1) {};  
+    while (1)
+    {
+    };
   }
 }
 
 /**
-  * @brief  CPU L1-Cache enable.
-  * @param  None
-  * @retval None
-  */
-static void CPU_CACHE_Enable(void)
+ * @brief  Configure Debug Mode to stop all timers.
+ * @param  None
+ * @retval None
+ */
+static void DebugMode_Config(void)
 {
-  /* Enable I-Cache */
-  SCB_EnableICache();
+  /* Configure debug mode on APB2 */
+  //  __HAL_RCC_DBGMCU_CLK_ENABLE ();
 
-  /* Enable D-Cache */
-  SCB_EnableDCache();
+  /* Freeze watchdog during debug mode */
+  __HAL_DBGMCU_FREEZE_WWDG();
+  __HAL_DBGMCU_FREEZE_IWDG();
+
+  /* Freeze ALL timer during debug mode */
+  __HAL_DBGMCU_FREEZE_RTC();
+  __HAL_DBGMCU_FREEZE_TIM1();
+  __HAL_DBGMCU_FREEZE_TIM2();
+  __HAL_DBGMCU_FREEZE_TIM3();
+  __HAL_DBGMCU_FREEZE_TIM4();
+  __HAL_DBGMCU_FREEZE_TIM5();
+  __HAL_DBGMCU_FREEZE_TIM6();
+  __HAL_DBGMCU_FREEZE_TIM7();
+  __HAL_DBGMCU_FREEZE_TIM8();
+  __HAL_DBGMCU_FREEZE_TIM9();
+  __HAL_DBGMCU_FREEZE_TIM10();
+  __HAL_DBGMCU_FREEZE_TIM11();
+  __HAL_DBGMCU_FREEZE_TIM12();
+  __HAL_DBGMCU_FREEZE_TIM13();
+  __HAL_DBGMCU_FREEZE_TIM14();
 }
 
-#ifdef  DEBUG
+/**
+ * @brief  This function is executed in case of error occurrence.
+ * @param  None
+ * @retval None
+ */
+static void Error_Handler(void)
+{
+  /* Turn N/A on */
+  BSP_LED_On(LED_RED);
+
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  };
+}
+
+#ifdef DEBUG
 /**
  * @brief   Custom _write implementation to send characters through SWO/SWV.
  *          This methode is used by puts() and printf().
@@ -211,22 +304,31 @@ static void CPU_CACHE_Enable(void)
  */
 int _write(int file, char *ptr, int len)
 {
+#if (USE_UART == 1)
+  /* Send message via USART3 (ST-Link VCOM) port */
+  HAL_UART_Transmit(&huart, (uint8_t *)ptr, len, 1000);
+#endif /* USE_UART */
+
+#if (USE_SWO == 1)
   /* Implement your write code here, this is used by puts and printf for example */
-  for(int i = 0; i < len ; i++) {
+  for (int i = 0; i < len; i++)
+  {
     ITM_SendChar((*ptr++));
   }
+#endif /* USE_SWO */
+
   return len;
 }
 #endif
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* User can add his own implementation to report the file name and line number,

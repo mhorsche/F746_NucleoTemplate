@@ -1,2 +1,19 @@
+# Ignore those
+.vscode/
+
+build/
+
+.DS_Store
+*.zip
+*.exe
+*.dll
+
+# But not these files
+!.gitignore
+!.vscode/c_cpp_properties.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+!makefile
 !build/firmware.*
-build/*
