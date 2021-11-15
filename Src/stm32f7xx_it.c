@@ -39,6 +39,10 @@
 #include "main.h"
 #include "stm32f7xx_it.h"
 
+/* FreeRTOS Includes */
+#include "FreeRTOS.h"
+#include "task.h"
+
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
   */
@@ -51,6 +55,8 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern TIM_HandleTypeDef htim13;
+extern unsigned long ulHighFrequencyTimerTicks;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -125,9 +131,9 @@ void UsageFault_Handler(void)
   * @param  None
   * @retval None
   */
-void SVC_Handler(void)
-{
-}
+// void SVC_Handler(void)
+// {
+// }
 
 /**
   * @brief  This function handles Debug Monitor exception.
@@ -143,9 +149,9 @@ void DebugMon_Handler(void)
   * @param  None
   * @retval None
   */
-void PendSV_Handler(void)
-{
-}
+// void PendSV_Handler(void)
+// {
+// }
 
 /**
   * @brief  This function handles SysTick Handler.
@@ -155,6 +161,14 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   HAL_IncTick();
+#if (INCLUDE_xTaskGetSchedulerState == 1)
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
+  {
+#endif /* INCLUDE_xTaskGetSchedulerState */
+    xPortSysTickHandler();
+#if (INCLUDE_xTaskGetSchedulerState == 1)
+  }
+#endif /* INCLUDE_xTaskGetSchedulerState */
 }
 
 /******************************************************************************/
@@ -165,14 +179,13 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief  This function handles PPP interrupt request.
-  * @param  None
-  * @retval None
-  */
-/*void PPP_IRQHandler(void)
+ * @brief This function handles TIM8 update interrupt and TIM13 global interrupt.
+ */
+void TIM8_UP_TIM13_IRQHandler(void)
 {
-}*/
-
+  ulHighFrequencyTimerTicks++;
+  HAL_TIM_IRQHandler(&htim13);
+}
 
 /**
   * @}

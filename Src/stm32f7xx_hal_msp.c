@@ -20,6 +20,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+/* FreeRTOS includes. */
+#include <FreeRTOS.h>
+
+/* Utilities includes. */
+#include <logging.h>
+
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
   */
@@ -64,13 +70,51 @@ void HAL_MspDeInit(void)
 {
 }
 
-#if (USE_UART == 1)
 /**
- * @brief UART MSP Initialization
- *        This function configures the hardware resources used in this example:
- *           - Peripheral's clock enable
- *           - Peripheral's GPIO Configuration
- * @param huart: UART handle pointer
+ * @brief  TIM MSP Initialization
+ *         This function configures the hardware resources used in this example:
+ *            - Peripheral's clock enable
+ *            - Peripheral's GPIO Configuration
+ * @param  htim: TIM handle pointer
+ * @retval None
+ */
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim_base)
+{
+  if (htim_base->Instance == TIM13)
+  {
+    /* Peripheral clock enable */
+    __HAL_RCC_TIM13_CLK_ENABLE();
+
+    /* TIM13 interrupt Init */
+    HAL_NVIC_SetPriority(TIM8_UP_TIM13_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1, 0);
+    HAL_NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
+  }
+}
+
+/**
+ * @brief  TIM MSP Initialization
+ *         This function freeze the hardware resources used in this example
+ * @param  htim: TIM handle pointer
+ * @retval None
+ */
+void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *htim_base)
+{
+  if (htim_base->Instance == TIM13)
+  {
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM13_CLK_DISABLE();
+
+    /* TIM13 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(TIM8_UP_TIM13_IRQn);
+  }
+}
+
+/**
+ * @brief  UART MSP Initialization
+ *         This function configures the hardware resources used in this example:
+ *            - Peripheral's clock enable
+ *            - Peripheral's GPIO Configuration
+ * @param  huart: UART handle pointer
  * @retval None
  */
 void HAL_UART_MspInit(UART_HandleTypeDef *huart)
@@ -112,11 +156,11 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 }
 
 /**
- * @brief UART MSP De-Initialization
- *        This function frees the hardware resources used in this example:
- *          - Disable the Peripheral's clock
- *          - Revert GPIO and NVIC configuration to their default state
- * @param huart: UART handle pointer
+ * @brief  UART MSP De-Initialization
+ *         This function frees the hardware resources used in this example:
+ *           - Disable the Peripheral's clock
+ *           - Revert GPIO and NVIC configuration to their default state
+ * @param  huart: UART handle pointer
  * @retval None
  */
 void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
@@ -134,7 +178,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
     HAL_GPIO_DeInit(STLK_RX_GPIO_Port, STLK_RX_Pin);
   }
 }
-#endif /* USE_UART */
 
 /**
   * @}

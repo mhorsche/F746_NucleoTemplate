@@ -37,6 +37,7 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 Src/main.c \
+Src/freertos.c \
 Src/stm32f7xx_it.c \
 Src/stm32f7xx_hal_msp.c \
 Drivers/BSP/STM32F7xx_Nucleo_144/stm32f7xx_nucleo_144.c \
@@ -44,11 +45,27 @@ Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c \
+Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c \
+Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c \
-Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c
+Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c \
+Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
+Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
+Middlewares/Third_Party/FreeRTOS/Source/list.c \
+Middlewares/Third_Party/FreeRTOS/Source/queue.c \
+Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
+Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
+Middlewares/Third_Party/FreeRTOS/Source/timers.c \
+Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
+Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/port.c \
+Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/logging.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/printf_stdarg.c
+
+# Middlewares/Third_Party/FreeRTOS/Source/portable/Common/mpu_wrappers.c \
 
 # ASM sources
 ASM_SOURCES =  \
@@ -112,8 +129,11 @@ C_INCLUDES =  \
 -IDrivers/STM32F7xx_HAL_Driver/Inc \
 -IDrivers/STM32F7xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32F7xx/Include \
--IDrivers/CMSIS/Include
-
+-IDrivers/CMSIS/Include \
+-IMiddlewares/Third_Party/FreeRTOS/source/include \
+-IMiddlewares/Third_Party/FreeRTOS/source/CMSIS_RTOS_V2 \
+-IMiddlewares/Third_Party/FreeRTOS/source/portable/GCC/ARM_CM7/r0p1 \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

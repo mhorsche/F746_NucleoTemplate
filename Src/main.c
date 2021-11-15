@@ -36,6 +36,20 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
+
+/* Standard includes. */
+#include <time.h>
+
+/* FreeRTOS includes. */
+#include <FreeRTOS.h>
+#include "task.h"
+#include "timers.h"
+#include "queue.h"
+#include "semphr.h"
+
+/* Utilities includes. */
+#include "logging.h"
 
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
@@ -49,18 +63,36 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-#if (USE_UART == 1)
-UART_HandleTypeDef huart;
-#endif /* USE_UART */
+/* Set the following constant to pdTRUE to log using the method indicated by the
+ * name of the constant, or pdFALSE to not log using the method indicated by the
+ * name of the constant.  Options include to UART out (xLogToUART), to SWO 
+ * (xLogToSWO), and to a UDP port (xLogToUDP).  If xLogToUDP is set to pdTRUE
+ * then UDP messages are sent to the IP address configured as the echo server
+ * address (see the configECHO_SERVER_ADDR0 definitions in FreeRTOSConfig.h) and
+ * the port number set by configPRINT_PORT in FreeRTOSConfig.h. */
+const BaseType_t xLogToUART = pdTRUE, xLogToSWO = pdTRUE, xLogToUDP = pdFALSE;
+
+osThreadId_t tid_startup;
+const osThreadAttr_t StartupTask_attributes =
+    {
+        .name = "start",
+        .stack_size = configMINIMAL_STACK_SIZE * 2,
+        .priority = (osPriority_t)osPriorityBelowNormal,
+};
+osThreadId_t tid_led;
+const osThreadAttr_t LedTask_attributes =
+    {
+        .name = "led",
+        .stack_size = configMINIMAL_STACK_SIZE * 2,
+        .priority = (osPriority_t)osPriorityBelowNormal1,
+};
 
 /* Private function prototypes -----------------------------------------------*/
-#if (USE_UART == 1)
-static void VCOM_UART_Init(void);
-#endif /* USE_UART */
+static void prvStartupTask(void *pvParameters);
+static void prvLedTask(void *pvParameters);
 
 static void SystemClock_Config(void);
 static void DebugMode_Config(void);
-static void Error_Handler(void);
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -93,6 +125,7 @@ int main(void)
        - Low Level Initialization
      */
   HAL_Init();
+  NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4); //https://www.freertos.org/RTOS-Cortex-M3-M4.html
 
   /* Configure the system clock to 216 MHz */
   SystemClock_Config();
@@ -100,80 +133,90 @@ int main(void)
   /* Configure debug mode to stop all timers */
   DebugMode_Config();
 
-  /* -0- Debug messag through SWO/SWV when DEBUG is defined */
-  printf("Hello World!\n");
-
-  /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
+  /* Enable GPIO Clock (to be able to program the configuration registers) */
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /* -2- Configure IO in output push-pull mode to drive external LEDs */
+  /* Configure IO in output push-pull mode to drive external LEDs */
   BSP_LED_Init(LED_RED);
   BSP_LED_Init(LED_GREEN);
   BSP_LED_Init(LED_BLUE);
 
-#if (USE_UART == 1)
-  /* -3- Configure the UART peripheral */
-  VCOM_UART_Init();
-#endif /* USE_UART */
+  /* Initialize logging for libraries that depend on it. */
+  uint32_t ulLoggingIPAddress = 0;
+  // ulLoggingIPAddress = FreeRTOS_inet_addr_quick(
+  //     configECHO_SERVER_ADDR0,
+  //     configECHO_SERVER_ADDR1,
+  //     configECHO_SERVER_ADDR2,
+  //     configECHO_SERVER_ADDR3 );
+  vLoggingInit(xLogToUART, xLogToSWO, xLogToUDP, ulLoggingIPAddress, configPRINT_PORT);
 
-  /* -4- Toggle IO in an infinite loop */
-  uint16_t cnt = 0;
+  /* Definition and creation of FreeRTOS Threads (Tasks) */
+  tid_startup = osThreadNew(prvStartupTask, NULL, &StartupTask_attributes);
+  tid_led = osThreadNew(prvLedTask, NULL, &LedTask_attributes);
+
+  /* Init and start scheduler */
+  osKernelInitialize(); /* Call init function for freertos objects (in freertos.c) */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
+  /* Infinite loop */
   while (1)
   {
-    printf("** %d Loop **\n", cnt);
+  };
+}
+
+static void
+prvStartupTask(void *pvParameters)
+{
+  uint32_t cnt = 0;
+
+  for (;;)
+  {
+    LogInfo(("## prvStartupTask %d Loop ##\r\n", cnt));
 
     /* Toggle green LED and write command via SWO/SWV */
     BSP_LED_Toggle(LED_GREEN);
-    printf("Green\n");
-    HAL_Delay(500);
-
-    /* Toggle blue LED and write command via SWO/SWV */
-    BSP_LED_Toggle(LED_BLUE);
-    printf("Blue\n");
-    HAL_Delay(500);
-
-    /* Toggle red LED and write command via SWO/SWV */
-    BSP_LED_Toggle(LED_RED);
-    printf("Red\n");
-    HAL_Delay(500);
+    osDelay(100);
 
     /* Increment loop counter */
     cnt++;
   }
 }
 
-#if (USE_UART == 1)
-/**
- * @brief VCOM USART Initialization Function
- * @param None
- * @retval None
- */
-static void VCOM_UART_Init(void)
+static void
+prvLedTask(void *pvParameters)
 {
-  /* Put the USART peripheral in the Asynchronous mode (UART Mode) */
-  /* UART configured as follows:
-      - Word Length = 8 Bits
-      - Stop Bit    = One Stop bit
-      - Parity      = None
-      - BaudRate    = 115200 baud
-      - Hardware flow control disabled (RTS and CTS signals) */
-  huart.Instance = STLK_USART;
-  huart.Init.BaudRate = 115200;
-  huart.Init.WordLength = UART_WORDLENGTH_8B;
-  huart.Init.StopBits = UART_STOPBITS_1;
-  huart.Init.Parity = UART_PARITY_NONE;
-  huart.Init.Mode = UART_MODE_TX_RX;
-  huart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  uint32_t cnt = 0;
 
-  if (HAL_UART_Init(&huart) != HAL_OK)
+  for (;;)
   {
-    Error_Handler();
+    LogInfo(("** prvLedTask %d Loop **\r\n", cnt));
+
+    /* Toggle blue LED and write command via SWO/SWV */
+    BSP_LED_Toggle(LED_BLUE);
+    osDelay(5);
+
+    /* Increment loop counter */
+    cnt++;
   }
 }
-#endif /* USE_UART */
+
+/**
+ * @brief  This function is executed in case of error occurrence.
+ * @param  None
+ * @retval None
+ */
+void Error_Handler(void)
+{
+  /* Turn N/A on */
+  BSP_LED_On(LED_RED);
+
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  };
+}
 
 /**
  * @brief  System Clock Configuration
@@ -197,9 +240,16 @@ static void VCOM_UART_Init(void)
  */
 static void SystemClock_Config(void)
 {
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  HAL_StatusTypeDef ret = HAL_OK;
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Configure LSE Drive Capability
+   */
+  HAL_PWR_EnableBkUpAccess();
+  /** Configure the main internal regulator output voltage
+   */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /* Enable HSE Oscillator and activate PLL with HSE as source */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
@@ -210,22 +260,15 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLN = 432;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 9;
-  ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-
-  if (ret != HAL_OK)
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    while (1)
-    {
-    };
+    Error_Handler();
   }
 
   /* Activate the OverDrive to reach the 216 MHz Frequency */
-  ret = HAL_PWREx_EnableOverDrive();
-  if (ret != HAL_OK)
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
-    while (1)
-    {
-    };
+    Error_Handler();
   }
 
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 
@@ -235,13 +278,19 @@ static void SystemClock_Config(void)
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
-  if (ret != HAL_OK)
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
   {
-    while (1)
-    {
-    };
+    Error_Handler();
   }
+
+  // RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = { 0 };
+  // PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_UART4;
+  // PeriphClkInitStruct.Uart4ClockSelection = RCC_UART4CLKSOURCE_PCLK1;
+  // if (HAL_RCCEx_PeriphCLKConfig (&PeriphClkInitStruct) != HAL_OK)
+  //   {
+  //     Error_Handler ();
+  //   }
 }
 
 /**
@@ -275,51 +324,6 @@ static void DebugMode_Config(void)
   __HAL_DBGMCU_FREEZE_TIM13();
   __HAL_DBGMCU_FREEZE_TIM14();
 }
-
-/**
- * @brief  This function is executed in case of error occurrence.
- * @param  None
- * @retval None
- */
-static void Error_Handler(void)
-{
-  /* Turn N/A on */
-  BSP_LED_On(LED_RED);
-
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  };
-}
-
-#ifdef DEBUG
-/**
- * @brief   Custom _write implementation to send characters through SWO/SWV.
- *          This methode is used by puts() and printf().
- * @param   file: pointer to the source file name
- * @param   *ptr: pointer to string array
- * @param   len: length of the string
- * @retval  length of the string
- */
-int _write(int file, char *ptr, int len)
-{
-#if (USE_UART == 1)
-  /* Send message via USART3 (ST-Link VCOM) port */
-  HAL_UART_Transmit(&huart, (uint8_t *)ptr, len, 1000);
-#endif /* USE_UART */
-
-#if (USE_SWO == 1)
-  /* Implement your write code here, this is used by puts and printf for example */
-  for (int i = 0; i < len; i++)
-  {
-    ITM_SendChar((*ptr++));
-  }
-#endif /* USE_SWO */
-
-  return len;
-}
-#endif
 
 #ifdef USE_FULL_ASSERT
 /**
