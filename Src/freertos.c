@@ -15,6 +15,12 @@
 #include "timers.h" /* Software timer related API prototypes. */
 #include "semphr.h" /* Semaphore related API prototypes. */
 
+/* FreeRTOS+TCP includes. */
+#include <FreeRTOS_IP.h>
+#include <FreeRTOS_Sockets.h>
+#include <FreeRTOS_DHCP.h>
+#include "NetworkInterface.h"
+
 /* Utilities includes. */
 #include "logging.h"
 
@@ -59,7 +65,7 @@ __weak unsigned long getRunTimeCounterValue(void)
 
 void vApplicationTickHook(void)
 {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  // BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   static uint32_t ulCount = 0;
 
   /* The RTOS tick hook function is enabled by setting configUSE_TICK_HOOK to
@@ -148,6 +154,90 @@ void vApplicationIdleHook(void)
         reduced accordingly. */
   }
 }
+/*-----------------------------------------------------------*/
+
+void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
+{
+  static BaseType_t xTasksAlreadyCreated = pdFALSE;
+  uint32_t ulIPAddress, ulNetMask, ulGatewayAddress, ulDNSServerAddress;
+  char cBuffer[16];
+
+  /* Both eNetworkUp and eNetworkDown events can be processed here. */
+  if (eNetworkEvent == eNetworkUp)
+  {
+    /* Create the tasks that use the TCP/IP stack if they have not already
+        been created. */
+    if (xTasksAlreadyCreated == pdFALSE)
+    {
+      /* For convenience, tasks that use FreeRTOS+TCP can be created here
+       * to ensure they are not created before the network is usable. */
+      xTasksAlreadyCreated = pdTRUE;
+    }
+    /* The network is up and configured.  Print out the configuration,
+     * which may have been obtained from a DHCP server. */
+    FreeRTOS_GetAddressConfiguration(&ulIPAddress, &ulNetMask,
+                                     &ulGatewayAddress, &ulDNSServerAddress);
+
+    /* Convert the IP address to a string then print it out. */
+    FreeRTOS_inet_ntoa(ulIPAddress, cBuffer);
+    LogInfo(("IP Address: %s\r\n", cBuffer));
+
+    /* Convert the net mask to a string then print it out. */
+    FreeRTOS_inet_ntoa(ulNetMask, cBuffer);
+    LogInfo(("Subnet Mask: %s\r\n", cBuffer));
+
+    /* Convert the IP address of the gateway to a string then print it out. */
+    FreeRTOS_inet_ntoa(ulGatewayAddress, cBuffer);
+    LogInfo(("Gateway IP Address: %s\r\n", cBuffer));
+
+    /* Convert the IP address of the DNS server to a string then print it out. */
+    FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuffer);
+    LogInfo(("DNS server IP Address: %s\r\n", cBuffer));
+  }
+  else
+  {
+    LogInfo(("Ethernet is DOWN\r\n"));
+  }
+}
+/*-----------------------------------------------------------*/
+/**
+ * @brief Callback that provides the inputs necessary to 
+ * generate a randomized TCP Initial Sequence Number per 
+ * RFC 6528.  In this case just a psuedo random number is used
+ * so THIS IS NOT RECOMMENDED FOR PRODUCTION SYSTEMS.
+ */
+uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t usSourcePort, uint32_t ulDestinationAddress, uint16_t usDestinationPort)
+{
+  return HAL_RNG_GetRandomNumber(&hrng);
+}
+/*-----------------------------------------------------------*/
+
+BaseType_t xApplicationGetRandomNumber(uint32_t *pulValue)
+{
+  HAL_StatusTypeDef xResult;
+  BaseType_t xReturn;
+  uint32_t ulValue;
+
+  xResult = HAL_RNG_GenerateRandomNumber(&hrng, &ulValue);
+  if (xResult == HAL_OK)
+  {
+    xReturn = pdPASS;
+    *pulValue = ulValue;
+  }
+  else
+  {
+    xReturn = pdFAIL;
+  }
+  return xReturn;
+}
+/*-----------------------------------------------------------*/
+
+#if (ipconfigSUPPORT_OUTGOING_PINGS == 1)
+void vApplicationPingReplyHook(ePingReplyStatus_t eStatus, uint16_t usIdentifier)
+{
+  LogInfo(("Received ping ID %04X\n", usIdentifier));
+}
+#endif
 /*-----------------------------------------------------------*/
 
 /********************************** END OF FILE *******************************/

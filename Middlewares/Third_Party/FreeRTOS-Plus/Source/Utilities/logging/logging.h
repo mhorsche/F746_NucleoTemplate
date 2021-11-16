@@ -91,12 +91,12 @@ extern void vLoggingPrintf(const char *pcFormatString,
 #define STLK_FORCE_RESET() __HAL_RCC_USART3_FORCE_RESET()
 #define STLK_RELEASE_RESET() __HAL_RCC_USART3_RELEASE_RESET()
 
-#define STLK_RX_Pin GPIO_PIN_8
-#define STLK_RX_GPIO_Port GPIOD
+#define STLK_RX_PIN GPIO_PIN_8
+#define STLK_RX_GPIO_PORT GPIOD
 #define STLK_RX_AF GPIO_AF7_USART3
 
-#define STLK_TX_Pin GPIO_PIN_9
-#define STLK_TX_GPIO_Port GPIOD
+#define STLK_TX_PIN GPIO_PIN_9
+#define STLK_TX_GPIO_PORT GPIOD
 #define STLK_TX_AF GPIO_AF7_USART3
 
 /* Exported functions ------------------------------------------------------- */

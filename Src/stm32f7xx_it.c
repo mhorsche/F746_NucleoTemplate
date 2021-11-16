@@ -179,6 +179,16 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+ * @brief This function handles Ethernet global interrupt.
+ * @see   NetworkInterface.c:1354
+ */
+// extern ETH_HandleTypeDef xETH;
+// void ETH_IRQHandler(void)
+// {
+//   HAL_ETH_IRQHandler(&xETH);
+// }
+
+/**
  * @brief This function handles TIM8 update interrupt and TIM13 global interrupt.
  */
 void TIM8_UP_TIM13_IRQHandler(void)

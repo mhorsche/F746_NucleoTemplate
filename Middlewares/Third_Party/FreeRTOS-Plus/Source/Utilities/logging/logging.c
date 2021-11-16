@@ -20,7 +20,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdarg.h>
-// #include <io.h>
 #include <ctype.h>
 
 /* FreeRTOS includes. */
@@ -28,10 +27,9 @@
 #include "task.h"
 #include "stream_buffer.h"
 
-// /* FreeRTOS+TCP includes. */
-// #include "FreeRTOS_IP.h"
-// #include "FreeRTOS_Sockets.h"
-// #include "FreeRTOS_Stream_Buffer.h"
+/* FreeRTOS+TCP includes. */
+#include <FreeRTOS_IP.h>
+#include <FreeRTOS_Sockets.h>
 
 /* Logging includes. */
 #include "logging.h"
@@ -67,7 +65,7 @@ osThreadId_t tid_logger;
 const osThreadAttr_t LoggerTask_attributes =
     {
         .name = "logger",
-        .stack_size = configMINIMAL_STACK_SIZE * 2,
+        .stack_size = configMINIMAL_STACK_SIZE * 5,
         .priority = (osPriority_t)osPriorityLow,
 };
 
@@ -81,8 +79,8 @@ BaseType_t xUARTLoggingUsed = pdTRUE,
 // static StreamBufferHandle_t xStreamBuffer = NULL;
 
 /* The UDP socket and address on/to which print messages are sent. */
-// Socket_t xPrintSocket = FREERTOS_INVALID_SOCKET;
-// struct freertos_sockaddr xPrintUDPAddress;
+Socket_t xPrintSocket = FREERTOS_INVALID_SOCKET;
+struct freertos_sockaddr xPrintUDPAddress;
 
 /* Private function prototypes -----------------------------------------------*/
 /*
@@ -153,8 +151,8 @@ void vLoggingInit(BaseType_t xLogToUART,
     if (xUDPLoggingUsed != pdFALSE)
     {
       /* Set the address to which the print messages are sent. */
-      //   xPrintUDPAddress.sin_port = FreeRTOS_htons(usRemotePort);
-      //   xPrintUDPAddress.sin_addr = ulRemoteIPAddress;
+      xPrintUDPAddress.sin_port = FreeRTOS_htons(usRemotePort);
+      xPrintUDPAddress.sin_addr = ulRemoteIPAddress;
     }
 
     /* If a disk file or stdout are to be used then Win32 system calls will
@@ -222,33 +220,25 @@ void vLoggingPrintf(const char *pcFormat, ...)
 
 static void prvCreatePrintSocket(void *pvParameter1, uint32_t ulParameter2)
 {
-  // static const TickType_t xSendTimeOut = pdMS_TO_TICKS(0);
-  // Socket_t xSocket;
+  static const TickType_t xSendTimeOut = pdMS_TO_TICKS(0);
+  Socket_t xSocket;
 
   /* The function prototype is that of a deferred function, but the parameters
      * are not actually used. */
   (void)pvParameter1;
   (void)ulParameter2;
 
-  // xSocket = FreeRTOS_socket(
-  //     FREERTOS_AF_INET,
-  //     FREERTOS_SOCK_DGRAM,
-  //     FREERTOS_IPPROTO_UDP);
+  xSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
 
-  // if (xSocket != FREERTOS_INVALID_SOCKET)
-  // {
-  //   /* FreeRTOS+TCP decides which port to bind to. */
-  //   FreeRTOS_setsockopt(
-  //       xSocket,
-  //       0,
-  //       FREERTOS_SO_SNDTIMEO,
-  //       &xSendTimeOut,
-  //       sizeof(xSendTimeOut));
-  //   FreeRTOS_bind(xSocket, NULL, 0);
+  if (xSocket != FREERTOS_INVALID_SOCKET)
+  {
+    /* FreeRTOS+TCP decides which port to bind to. */
+    FreeRTOS_setsockopt(xSocket, 0, FREERTOS_SO_SNDTIMEO, &xSendTimeOut, sizeof(xSendTimeOut));
+    FreeRTOS_bind(xSocket, NULL, 0);
 
-  //   /* Now the socket is bound it can be assigned to the print socket. */
-  //   xPrintSocket = xSocket;
-  // }
+    /* Now the socket is bound it can be assigned to the print socket. */
+    xPrintSocket = xSocket;
+  }
 }
 /*-----------------------------------------------------------*/
 
@@ -258,39 +248,8 @@ static void prvLoggingPrintf(const char *pcFormat, va_list xArgs)
   msgqueue_obj_t msg;
 
   memset((uint8_t *)msg.str, 0x00, sizeof(msg.str));
-  // memcpy(((uint8_t *)msg.str), (uint8_t *)pcFormat, strlen(pcFormat));
-  // msg.args = xArgs;
-  // msg.len = strlen(pcFormat);
-
-  // msg.len = 17;
-  // int len = sprintf((char *)msg.str, "Hallo welt %ld\r\n", cnt++);
-  // msg.len = (uint8_t)len;
-
-  //   static BaseType_t lock = pdFALSE;
-  //   char buf[dSTREAM_BUFFER_LENGTH_BYTES];
-  // int len = vsnprintf(buf, sizeof(buf) - 1, pcFormat, xArgs);
-
   size_t len = vsnprintf(msg.str, sizeof(msg.str), pcFormat, xArgs);
   msg.len = len;
-
-  // /* maximum message length is limited by buffer size */
-  // if (len > dSTREAM_BUFFER_LENGTH_BYTES)
-  // {
-  //   memcpy(((uint8_t *)msg.str), (uint8_t *)buf,
-  //          dSTREAM_BUFFER_LENGTH_BYTES - 5);
-  //   /* append ...\r\n */
-  //   msg.str[dSTREAM_BUFFER_LENGTH_BYTES - 5] = '.';
-  //   msg.str[dSTREAM_BUFFER_LENGTH_BYTES - 4] = '.';
-  //   msg.str[dSTREAM_BUFFER_LENGTH_BYTES - 3] = '.';
-  //   msg.str[dSTREAM_BUFFER_LENGTH_BYTES - 2] = '\r';
-  //   msg.str[dSTREAM_BUFFER_LENGTH_BYTES - 1] = '\n';
-  //   msg.len = (uint8_t)dSTREAM_BUFFER_LENGTH_BYTES;
-  // }
-  // else
-  // {
-  //   memcpy(((uint8_t *)msg.str), (uint8_t *)buf, len);
-  //   msg.len = (uint8_t)len;
-  // }
 
   /* Append message to message queue */
   status = osMessageQueuePut(mid_MsgQueue, &msg, 0U, 0U);
@@ -315,7 +274,7 @@ static void prvLoggingThread(void *pvParameters)
 {
   osStatus_t status;
   msgqueue_obj_t msg;
-  // char buf[dSTREAM_BUFFER_LENGTH_BYTES];
+  char buf[dSTREAM_BUFFER_LENGTH_BYTES];
 
   /* Infinite loop */
   for (;;)
@@ -324,9 +283,6 @@ static void prvLoggingThread(void *pvParameters)
     status = osMessageQueueGet(mid_MsgQueue, &msg, NULL, 100U);
     if (status == osOK)
     {
-      // /* Parse string */
-      // int len = vsnprintf(buf, sizeof(buf), msg.str, msg.args);
-
       /* Enable red LED to indicate data transfer */
       BSP_LED_On(LED_RED);
 
@@ -334,7 +290,6 @@ static void prvLoggingThread(void *pvParameters)
       if (xUARTLoggingUsed != pdFALSE)
       {
         HAL_UART_Transmit(&huart, (uint8_t *)&msg.str, msg.len, 1000);
-        // HAL_UART_Transmit(&huart, (uint8_t *)&buf, len, 1000);
       }
 
       /* Send message via SWO */
@@ -350,24 +305,65 @@ static void prvLoggingThread(void *pvParameters)
        * because it only uses FreeRTOS function. */
       if (xUDPLoggingUsed != pdFALSE)
       {
-        // if ((xPrintSocket == FREERTOS_INVALID_SOCKET) && (FreeRTOS_IsNetworkUp() != pdFALSE))
-        // {
-        //   /* Create and bind the socket to which print messages are sent.  The
-        //          * xTimerPendFunctionCall() function is used even though this is
-        //          * not an interrupt because this function is called from the IP task
-        //          * and the	IP task cannot itself wait for a socket to bind.  The
-        //          * parameters to prvCreatePrintSocket() are not required so set to
-        //          * NULL or 0. */
-        //   xTimerPendFunctionCall(prvCreatePrintSocket, NULL, 0, dlDONT_BLOCK);
-        // }
+        if ((xPrintSocket == FREERTOS_INVALID_SOCKET) && (FreeRTOS_IsNetworkUp() != pdFALSE))
+        {
+          /* Create and bind the socket to which print messages are sent.  The
+           * xTimerPendFunctionCall() function is used even though this is
+           * not an interrupt because this function is called from the IP task
+           * and the	IP task cannot itself wait for a socket to bind.  The
+           * parameters to prvCreatePrintSocket() are not required so set to
+           * NULL or 0. */
+          xTimerPendFunctionCall(prvCreatePrintSocket, NULL, 0, dlDONT_BLOCK);
+        }
 
-        // if (xPrintSocket != FREERTOS_INVALID_SOCKET)
-        // {
-        //   FreeRTOS_sendto(xPrintSocket, cOutputString, xLength, 0, &xPrintUDPAddress, sizeof(xPrintUDPAddress));
+        if (xPrintSocket != FREERTOS_INVALID_SOCKET)
+        {
+          // uint8_t *pucBuffer;
+          // /* This RTOS task is going to send using the zero copy interface.  The
+          //  * data being sent is therefore written directly into a buffer that is
+          //  * passed into, rather than copied into, the FreeRTOS_sendto()
+          //  * function.
+          //  * First obtain a buffer of adequate length from the TCP/IP stack into which
+          //  * the string will be written. */
+          // pucBuffer = FreeRTOS_GetUDPPayloadBuffer(msg.len, portMAX_DELAY);
 
-        //   /* Just because the UDP data logger I'm using is dumb. */
-        //   FreeRTOS_sendto(xPrintSocket, "\r", sizeof(char), 0, &xPrintUDPAddress, sizeof(xPrintUDPAddress));
-        // }
+          // /* Check a buffer was obtained. */
+          // if (pucBuffer != 0)
+          // {
+          //   /* Create the string that is sent. */
+          //   memcpy((uint8_t *)pucBuffer, msg.str, msg.len);
+          //   // memset(pucBuffer, 0x00, xStringLength);
+          //   // sprintf(pucBuffer, "%s%lurn", ucStringToSend, ulCount);
+
+          //   /* Pass the buffer into the send function.  ulFlags has the
+          //    * FREERTOS_ZERO_COPY bit set so the TCP/IP stack will take control of the
+          //    * buffer rather than copy data out of the buffer. */
+          //   BaseType_t lReturned = FreeRTOS_sendto(xPrintSocket,
+          //                                          (void *)pucBuffer,
+          //                                          msg.len,
+          //                                          FREERTOS_ZERO_COPY,
+          //                                          &xPrintUDPAddress, sizeof(xPrintUDPAddress));
+
+          //   if (lReturned == 0)
+          //   {
+          //     /* The send operation failed, so this RTOS task is still responsible
+          //      * for the buffer obtained from the TCP/IP stack.  To ensure the buffer
+          //      * is not lost it must either be used again, or, as in this case,
+          //      * returned to the TCP/IP stack using FreeRTOS_ReleaseUDPPayloadBuffer().
+          //      * pucBuffer can be safely re-used after this call. */
+          //     FreeRTOS_ReleaseUDPPayloadBuffer((void *)pucBuffer);
+          //   }
+          //   else
+          //   {
+          //     /* The send was successful so the TCP/IP stack is now managing the
+          //      * buffer pointed to by pucBuffer, and the TCP/IP stack will
+          //      * return the buffer once it has been sent.  pucBuffer can
+          //      * be safely re-used. */
+          //   }
+          // }
+
+          FreeRTOS_sendto(xPrintSocket, msg.str, msg.len, 0, &xPrintUDPAddress, sizeof(xPrintUDPAddress));
+        }
       }
 
       /* Disable red LED after data transfer */

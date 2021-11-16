@@ -208,7 +208,7 @@ standard names. */
  * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/UDP_Echo_Clients.html. */
 #define configECHO_SERVER_ADDR0 192
 #define configECHO_SERVER_ADDR1 168
-#define configECHO_SERVER_ADDR2 2
+#define configECHO_SERVER_ADDR2 178
 #define configECHO_SERVER_ADDR3 16
 #define configTCP_ECHO_CLIENT_PORT 7
 

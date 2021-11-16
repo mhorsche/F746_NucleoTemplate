@@ -139,19 +139,19 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
     /*##-2- Configure peripheral GPIO ##########################################*/
     /* UART TX GPIO pin configuration  */
-    GPIO_InitStruct.Pin = STLK_TX_Pin;
+    GPIO_InitStruct.Pin = STLK_TX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = STLK_TX_AF;
 
-    HAL_GPIO_Init(STLK_TX_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(STLK_TX_GPIO_PORT, &GPIO_InitStruct);
 
     /* UART RX GPIO pin configuration  */
-    GPIO_InitStruct.Pin = STLK_RX_Pin;
+    GPIO_InitStruct.Pin = STLK_RX_PIN;
     GPIO_InitStruct.Alternate = STLK_RX_AF;
 
-    HAL_GPIO_Init(STLK_RX_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(STLK_RX_GPIO_PORT, &GPIO_InitStruct);
   }
 }
 
@@ -173,9 +173,142 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 
     /*##-2- Disable peripherals and GPIO Clocks #################################*/
     /* Configure UART Tx as alternate function  */
-    HAL_GPIO_DeInit(STLK_TX_GPIO_Port, STLK_TX_Pin);
+    HAL_GPIO_DeInit(STLK_TX_GPIO_PORT, STLK_TX_PIN);
     /* Configure UART Rx as alternate function  */
-    HAL_GPIO_DeInit(STLK_RX_GPIO_Port, STLK_RX_Pin);
+    HAL_GPIO_DeInit(STLK_RX_GPIO_PORT, STLK_RX_PIN);
+  }
+}
+
+/**
+ * @brief  Initializes the RNG MSP.
+ * @param  hrng pointer to a RNG_HandleTypeDef structure that contains
+ *                the configuration information for RNG.
+ * @retval None
+ */
+void HAL_RNG_MspInit(RNG_HandleTypeDef *hrng)
+{
+  if (hrng->Instance == RNG)
+  {
+    /* RNG clock enable */
+    __HAL_RCC_RNG_CLK_ENABLE();
+  }
+}
+
+/**
+ * @brief  DeInitializes the RNG MSP.
+ * @param  hrng pointer to a RNG_HandleTypeDef structure that contains
+ *                the configuration information for RNG.
+ * @retval None
+ */
+void HAL_RNG_MspDeInit(RNG_HandleTypeDef *hrng)
+{
+
+  if (hrng->Instance == RNG)
+  {
+    /* Peripheral clock disable */
+    __HAL_RCC_RNG_CLK_DISABLE();
+  }
+}
+
+/**
+ * @brief  Initializes the ETH MSP.
+ * @param  heth pointer to a ETH_HandleTypeDef structure that contains
+ *         the configuration information for ETHERNET module
+ * @retval None
+ */
+void HAL_ETH_MspInit(ETH_HandleTypeDef *heth)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  if (heth->Instance == ETH)
+  {
+    /* ETH clock enable */
+    __HAL_RCC_ETH_CLK_ENABLE();
+
+    RMII_REF_CLK_GPIO_CLK_ENABLE();
+    RMII_MDIO_GPIO_CLK_ENABLE();
+    RMII_MDC_GPIO_CLK_ENABLE();
+    RMII_CRS_DV_GPIO_CLK_ENABLE();
+    RMII_RXD0_GPIO_CLK_ENABLE();
+    RMII_RXD1_GPIO_CLK_ENABLE();
+    RMII_MII_RXER_GPIO_CLK_ENABLE();
+    RMII_TX_EN_GPIO_CLK_ENABLE();
+    RMII_TXD0_GPIO_CLK_ENABLE();
+    RMII_TXD1_GPIO_CLK_ENABLE();
+
+    /* ETH GPIO Configuration */
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
+
+    GPIO_InitStruct.Pin = RMII_REF_CLK_PIN;
+    HAL_GPIO_Init(RMII_REF_CLK_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_MDIO_PIN;
+    HAL_GPIO_Init(RMII_MDIO_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_MDC_PIN;
+    HAL_GPIO_Init(RMII_MDC_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_CRS_DV_PIN;
+    HAL_GPIO_Init(RMII_CRS_DV_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_RXD0_PIN;
+    HAL_GPIO_Init(RMII_RXD0_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_RXD1_PIN;
+    HAL_GPIO_Init(RMII_RXD1_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_MII_RXER_PIN;
+    HAL_GPIO_Init(RMII_MII_RXER_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_TX_EN_PIN;
+    HAL_GPIO_Init(RMII_TX_EN_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_TXD0_PIN;
+    HAL_GPIO_Init(RMII_TXD0_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = RMII_TXD1_PIN;
+    HAL_GPIO_Init(RMII_TXD1_GPIO_PORT, &GPIO_InitStruct);
+
+    /* Enable the Ethernet global Interrupt */
+    HAL_NVIC_SetPriority(ETH_IRQn, 5, 0); // @todo check prio 0x7?
+    HAL_NVIC_EnableIRQ(ETH_IRQn);
+
+    // HAL_NVIC_SetPriority(ETH_WKUP_IRQn, 5, 0);
+    // HAL_NVIC_EnableIRQ(ETH_WKUP_IRQn);
+  }
+}
+
+/**
+ * @brief  DeInitializes ETH MSP.
+ * @param  heth pointer to a ETH_HandleTypeDef structure that contains
+ *         the configuration information for ETHERNET module
+ * @retval None
+ */
+void HAL_ETH_MspDeInit(ETH_HandleTypeDef *heth)
+{
+  if (heth->Instance == ETH)
+  {
+    /* Peripheral clock disable */
+    __HAL_RCC_ETH_CLK_DISABLE();
+
+    /* ETH GPIO Configuration */
+    HAL_GPIO_DeInit(RMII_REF_CLK_GPIO_PORT, RMII_REF_CLK_PIN);
+    HAL_GPIO_DeInit(RMII_MDIO_GPIO_PORT, RMII_MDIO_PIN);
+    HAL_GPIO_DeInit(RMII_MDC_GPIO_PORT, RMII_MDC_PIN);
+    HAL_GPIO_DeInit(RMII_CRS_DV_GPIO_PORT, RMII_CRS_DV_PIN);
+    HAL_GPIO_DeInit(RMII_RXD0_GPIO_PORT, RMII_RXD0_PIN);
+    HAL_GPIO_DeInit(RMII_RXD1_GPIO_PORT, RMII_RXD1_PIN);
+    HAL_GPIO_DeInit(RMII_MII_RXER_GPIO_PORT, RMII_MII_RXER_PIN);
+    HAL_GPIO_DeInit(RMII_TX_EN_GPIO_PORT, RMII_TX_EN_PIN);
+    HAL_GPIO_DeInit(RMII_TXD0_GPIO_PORT, RMII_TXD0_PIN);
+    HAL_GPIO_DeInit(RMII_TXD1_GPIO_PORT, RMII_TXD1_PIN);
+
+    /* ETH interrupt Deinit */
+    HAL_NVIC_DisableIRQ(ETH_IRQn);
+    // HAL_NVIC_DisableIRQ(ETH_WKUP_IRQn);
   }
 }
 

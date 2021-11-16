@@ -39,19 +39,39 @@ C_SOURCES =  \
 Src/main.c \
 Src/freertos.c \
 Src/stm32f7xx_it.c \
-Src/stm32f7xx_hal_msp.c \
+Src/stm32f7xx_hal_msp.c 
+
+# STM HAL sources
+C_SOURCES +=  \
 Drivers/BSP/STM32F7xx_Nucleo_144/stm32f7xx_nucleo_144.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c \
+Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c \
+Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c \
+Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rng.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c \
+Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart_ex.c \
 Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c \
-Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c \
+Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c 
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_exti.c \
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c \
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c \
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c \
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c \
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c \
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c \
+# 
+# Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c \
+
+
+# FreeRTOS sources
+C_SOURCES +=  \
 Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
 Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
 Middlewares/Third_Party/FreeRTOS/Source/list.c \
@@ -61,11 +81,28 @@ Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
 Middlewares/Third_Party/FreeRTOS/Source/timers.c \
 Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/port.c \
-Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c \
-Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/logging.c \
-Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/printf_stdarg.c
+Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c 
 
-# Middlewares/Third_Party/FreeRTOS/Source/portable/Common/mpu_wrappers.c \
+# FreeRTOS+Utilities sources
+C_SOURCES +=  \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/logging.c 
+# Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/printf_stdarg.c 
+
+# FreeRTOS+TCP sources
+C_SOURCES +=  \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_ARP.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_DHCP.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_DNS.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_IP.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_Sockets.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_Stream_Buffer.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_TCP_IP.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_TCP_WIN.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_UDP_IP.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/BufferManagement/BufferAllocation_1.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/Common/phyHandling.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/STM32Fxx/NetworkInterface.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/STM32Fxx/stm32fxx_hal_eth.c 
 
 # ASM sources
 ASM_SOURCES =  \
@@ -114,9 +151,10 @@ AS_DEFS =
 # C defines
 C_DEFS =  \
 -DDEBUG \
+-DSTM32F7xx \
 -DSTM32F746xx \
 -DUSE_STM32F7XX_NUCLEO_144 \
--DUSE_HAL_DRIVER
+-DUSE_HAL_DRIVER 
 
 
 # AS includes
@@ -133,7 +171,11 @@ C_INCLUDES =  \
 -IMiddlewares/Third_Party/FreeRTOS/source/include \
 -IMiddlewares/Third_Party/FreeRTOS/source/CMSIS_RTOS_V2 \
 -IMiddlewares/Third_Party/FreeRTOS/source/portable/GCC/ARM_CM7/r0p1 \
--IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/include \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/Compiler/GCC \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/include \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/STM32Fxx 
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

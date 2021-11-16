@@ -60,7 +60,7 @@ extern "C"
 /* #define HAL_DCMI_MODULE_ENABLED  */
 #define HAL_DMA_MODULE_ENABLED
 /* #define HAL_DMA2D_MODULE_ENABLED  */
-/* #define HAL_ETH_MODULE_ENABLED  */
+#define HAL_ETH_MODULE_ENABLED
 #define HAL_FLASH_MODULE_ENABLED
 /* #define HAL_NAND_MODULE_ENABLED */
 /* #define HAL_NOR_MODULE_ENABLED */
@@ -76,7 +76,7 @@ extern "C"
 #define HAL_PWR_MODULE_ENABLED
 /* #define HAL_QSPI_MODULE_ENABLED    */
 #define HAL_RCC_MODULE_ENABLED
-/* #define HAL_RNG_MODULE_ENABLED    */
+#define HAL_RNG_MODULE_ENABLED
 /* #define HAL_RTC_MODULE_ENABLED */
 /* #define HAL_SAI_MODULE_ENABLED    */
 /* #define HAL_SD_MODULE_ENABLED   */
