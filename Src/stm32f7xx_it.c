@@ -55,8 +55,9 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern TIM_HandleTypeDef htim13;
-extern unsigned long ulHighFrequencyTimerTicks;
+extern TIM_HandleTypeDef htim2;
+extern uint32_t ulTimer2Flags;
+extern uint32_t ulInterruptCount;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -189,12 +190,16 @@ void SysTick_Handler(void)
 // }
 
 /**
- * @brief This function handles TIM8 update interrupt and TIM13 global interrupt.
+ * @brief This function handles TIM2 global interrupt.
  */
-void TIM8_UP_TIM13_IRQHandler(void)
+void TIM2_IRQHandler(void)
 {
-  ulHighFrequencyTimerTicks++;
-  HAL_TIM_IRQHandler(&htim13);
+  ulTimer2Flags = htim2.Instance->SR;
+  if ((ulTimer2Flags & TIM_FLAG_UPDATE) != 0)
+  {
+    __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
+    ulInterruptCount++;
+  }
 }
 
 /**

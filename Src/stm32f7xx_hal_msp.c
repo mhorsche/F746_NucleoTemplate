@@ -80,14 +80,14 @@ void HAL_MspDeInit(void)
  */
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim_base)
 {
-  if (htim_base->Instance == TIM13)
+  if (htim_base->Instance == TIM2)
   {
-    /* Peripheral clock enable */
-    __HAL_RCC_TIM13_CLK_ENABLE();
+    /* TIM2 clock enable */
+    __HAL_RCC_TIM2_CLK_ENABLE();
 
-    /* TIM13 interrupt Init */
-    HAL_NVIC_SetPriority(TIM8_UP_TIM13_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1, 0);
-    HAL_NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
+    /* NVIC configuration for DMA transfer complete interrupt */
+    HAL_NVIC_SetPriority(TIM2_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1, 0);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
   }
 }
 
@@ -99,13 +99,13 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim_base)
  */
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *htim_base)
 {
-  if (htim_base->Instance == TIM13)
+  if (htim_base->Instance == TIM2)
   {
     /* Peripheral clock disable */
-    __HAL_RCC_TIM13_CLK_DISABLE();
+    __HAL_RCC_TIM2_CLK_DISABLE();
 
-    /* TIM13 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(TIM8_UP_TIM13_IRQn);
+    /* TIM2 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(TIM2_IRQn);
   }
 }
 

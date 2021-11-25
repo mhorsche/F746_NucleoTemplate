@@ -89,57 +89,54 @@
 #define phyREG_1F_PHYSPCS 0x1FU /* PHY Special Control/Status Register */
 
 /* MDIO Manageable Device (MMD) Registers ------------------------------------*/
-#define PHY_MMD_PCS ((uint16_t)3)                  /* PCS */
-#define PHY_MMD_PCSDP1R ((uint16_t)5)              /* PCS MMD Devices Present 1 Register */
-#define PHY_MMD_PCSDP2R ((uint16_t)6)              /* PCS MMD Devices Present 2 Register */
-#define PHY_MMD_WUCSR ((uint16_t)32784)            /* Wakeup Control and Status Register */
-#define PHY_MMD_WUF_CFGA ((uint16_t)32785)         /* Wakeup Filter Configuration Register A */
-#define PHY_MMD_WUF_CFGB ((uint16_t)32786)         /* Wakeup Filter Configuration Register B */
-#define PHY_MMD_WUF_MASK_127_112 ((uint16_t)32801) /* Wakeup Filter Byte Mask Registers [127:112] */
-#define PHY_MMD_WUF_MASK_111_96 ((uint16_t)32802)  /* Wakeup Filter Byte Mask Registers [111:96] */
-#define PHY_MMD_WUF_MASK_95_80 ((uint16_t)32803)   /* Wakeup Filter Byte Mask Registers [95:80] */
-#define PHY_MMD_WUF_MASK_79_64 ((uint16_t)32804)   /* Wakeup Filter Byte Mask Registers [79:64] */
-#define PHY_MMD_WUF_MASK_63_48 ((uint16_t)32805)   /* Wakeup Filter Byte Mask Registers [63:48] */
-#define PHY_MMD_WUF_MASK_47_32 ((uint16_t)32806)   /* Wakeup Filter Byte Mask Registers [47:32] */
-#define PHY_MMD_WUF_MASK_31_16 ((uint16_t)32807)   /* Wakeup Filter Byte Mask Registers [31:16] */
-#define PHY_MMD_WUF_MASK_15_0 ((uint16_t)32808)    /* Wakeup Filter Byte Mask Registers [15:0] */
-#define PHY_MMD_RX_ADDRA ((uint16_t)32865)         /* MAC Receive Address A Register */
-#define PHY_MMD_RX_ADDRB ((uint16_t)32866)         /* MAC Receive Address B Register */
-#define PHY_MMD_RX_ADDRC ((uint16_t)32867)         /* MAC Receive Address C Register */
-#define PHY_MMD_MCFGR ((uint16_t)32868)            /* Miscellaneous Configuration Register */
+#define phyMMD_PCS ((uint16_t)3)                  /* PCS */
+#define phyMMD_PCSDP1R ((uint16_t)5)              /* PCS MMD Devices Present 1 Register */
+#define phyMMD_PCSDP2R ((uint16_t)6)              /* PCS MMD Devices Present 2 Register */
+#define phyMMD_WUCSR ((uint16_t)32784)            /* Wakeup Control and Status Register */
+#define phyMMD_WUF_CFGA ((uint16_t)32785)         /* Wakeup Filter Configuration Register A */
+#define phyMMD_WUF_CFGB ((uint16_t)32786)         /* Wakeup Filter Configuration Register B */
+#define phyMMD_WUF_MASK_127_112 ((uint16_t)32801) /* Wakeup Filter Byte Mask Registers [127:112] */
+#define phyMMD_WUF_MASK_111_96 ((uint16_t)32802)  /* Wakeup Filter Byte Mask Registers [111:96] */
+#define phyMMD_WUF_MASK_95_80 ((uint16_t)32803)   /* Wakeup Filter Byte Mask Registers [95:80] */
+#define phyMMD_WUF_MASK_79_64 ((uint16_t)32804)   /* Wakeup Filter Byte Mask Registers [79:64] */
+#define phyMMD_WUF_MASK_63_48 ((uint16_t)32805)   /* Wakeup Filter Byte Mask Registers [63:48] */
+#define phyMMD_WUF_MASK_47_32 ((uint16_t)32806)   /* Wakeup Filter Byte Mask Registers [47:32] */
+#define phyMMD_WUF_MASK_31_16 ((uint16_t)32807)   /* Wakeup Filter Byte Mask Registers [31:16] */
+#define phyMMD_WUF_MASK_15_0 ((uint16_t)32808)    /* Wakeup Filter Byte Mask Registers [15:0] */
+#define phyMMD_RX_ADDRA ((uint16_t)32865)         /* MAC Receive Address A Register */
+#define phyMMD_RX_ADDRB ((uint16_t)32866)         /* MAC Receive Address B Register */
+#define phyMMD_RX_ADDRC ((uint16_t)32867)         /* MAC Receive Address C Register */
+#define phyMMD_MCFGR ((uint16_t)32868)            /* Miscellaneous Configuration Register */
 
 /* Bit fields for 'phyREG_00_BMCR', the 'Basic Mode Control Register'. */
 #define phyBMCR_FULL_DUPLEX 0x0100U /* Full duplex. */
 #define phyBMCR_AN_RESTART 0x0200U  /* Auto negotiation restart. */
 #define phyBMCR_ISOLATE 0x0400U     /* 1 = Isolates 0 = Normal operation. */
-#define PHY_POWERDOWN 0x0800U       /* Select the power down mode */
+#define phyBMCR_POWERDOWN 0x0800U   /* Select the power down mode */
 #define phyBMCR_AN_ENABLE 0x1000U   /* Enable auto negotiation. */
 #define phyBMCR_SPEED_100 0x2000U   /* Select 100Mbps. */
-#define PHY_LOOPBACK 0x4000U        /* Select loop-back mode */
+#define phyBMCR_LOOPBACK 0x4000U    /* Select loop-back mode */
 #define phyBMCR_RESET 0x8000U       /* Reset the PHY. */
 
-/* Basic Status Register -----------------------------------------------------*/
-#define PHY_EXT_CAP ((uint16_t)0x0001U)          /* Extended Capabilities */
-#define PHY_JABBER_DETECTION ((uint16_t)0x0002U) /* Jabber condition detected */
-#define PHY_LINKED_STATUS ((uint16_t)0x0004U)    /* Link Status */
-
-#define PHY_AUTONEGO_COMPLETE ((uint16_t)0x0020U) /* Auto-Negotiation process completed */
-
-#define PHY_SPEED_STATUS ((uint16_t)0x0004U)  /* PHY Speed mask */
-#define PHY_DUPLEX_STATUS ((uint16_t)0x0010U) /* PHY Duplex mask */
-
-#define PHY_FULLDUPLEX_100M ((uint16_t)0x2100U) /* Set the full-duplex mode at 100 Mb/s */
-#define PHY_HALFDUPLEX_100M ((uint16_t)0x2000U) /* Set the half-duplex mode at 100 Mb/s */
-#define PHY_FULLDUPLEX_10M ((uint16_t)0x0100U)  /* Set the full-duplex mode at 10 Mb/s */
-#define PHY_HALFDUPLEX_10M ((uint16_t)0x0000U)  /* Set the half-duplex mode at 10 Mb/s */
+/* Bit fields for 'phyREG_01_BMSR', the 'Basic Mode Status Register'. */
+#define phyBMSR_EXT_CAP ((uint16_t)0x0001U)          /* Extended Capabilities */
+#define phyBMSR_JABBER_DETECTION ((uint16_t)0x0002U) /* Jabber condition detected */
+#define phyBMSR_LINK_STATUS ((uint16_t)0x0004U)      /* Link Status */
+#define phyBMSR_AN_ABILITY ((uint16_t)0x0008U)       /* Able to perform Auto-Negotiation function */
+#define phyBMSR_REMOTE_FAULT ((uint16_t)0x0010U)     /* Remote fault condition detected */
+#define phyBMSR_AN_COMPLETE ((uint16_t)0x0020U)      /* Auto-Negotiation process completed */
+#define phyBMSR_EXT_STATUS ((uint16_t)0x0100U)       /* Extended status information in register 15 */
+#define phyBMSR_HALFDUPLEX_100M ((uint16_t)0x0200U)  /* Able to perform half-duplex mode at 100 Mb/s */
+#define phyBMSR_FULLDUPLEX_100M ((uint16_t)0x0400U)  /* Able to perform full-duplex mode at 100 Mb/s */
+#define phyBMSR_HALFDUPLEX_10M ((uint16_t)0x0800U)   /* Able to perform half-duplex mode at 10 Mb/s */
+#define phyBMSR_FULLDUPLEX_10M ((uint16_t)0x1000U)   /* Able to perform full-duplex mode at 10 Mb/s */
+#define phyBMSR_HALFDUPLEX_TX ((uint16_t)0x2000U)    /* 100BASE-TX with half-duplex */
+#define phyBMSR_FULLDUPLEX_TX ((uint16_t)0x4000U)    /* 100BASE-TX with full-duplex */
+#define phyBMSR_BASE_T4 ((uint16_t)0x8000U)          /* Able for 100BASE-T4 mode */
 
 /* Bit fields for 'phyREG_19_PHYCR', the 'PHY Control Register'. */
 #define PHYCR_MDIX_EN 0x8000U    /* Enable Auto MDIX. */
 #define PHYCR_MDIX_FORCE 0x4000U /* Force MDIX crossed. */
-
-#define phyBMSR_AN_COMPLETE 0x0020U /* Auto-Negotiation process completed */
-
-#define phyBMSR_LINK_STATUS 0x0004U
 
 #define phyPHYSTS_LINK_STATUS 0x0001U   /* PHY Link mask */
 #define phyPHYSTS_SPEED_STATUS 0x0002U  /* PHY Speed mask */
@@ -170,151 +167,131 @@
      phyADVERTISE_CSMA)
 
 /* Interrupt Source Flag Register 29 (ISFR) ----------------------------------*/
-#define PHY_ISFR_INT8 ((uint16_t)0x0100U) // 8 INT8
-#define PHY_ISFR_WOL PHY_ISFR_INT8
-// 0 = Not source of interrupt
-// 1 = Wake on LAN (WoL) event detected
+#define phyISFR_INT8 ((uint16_t)0x0100U) // 8 INT8
+#define phyISFR_WOL phyISFR_INT8         /* Wake on LAN (WoL) event detected */
 
-#define PHY_ISFR_INT7 ((uint16_t)0x0080U) // 7 INT7
-#define PHY_ISFR_ENERGYON PHY_ISFR_INT7
-// 0 = Not source of interrupt
-// 1 = ENERGYON generated
+#define phyISFR_INT7 ((uint16_t)0x0080U) // 7 INT7
+#define phyISFR_ENERGYON phyISFR_INT7    /* ENERGYON generated */
 
-#define PHY_ISFR_INT6 ((uint16_t)0x0040U) // 6 INT6
-#define PHY_ISFR_ANC PHY_ISFR_INT6
-// 0 = Not source of interrupt
-// 1 = Auto-Negotiation complete
+#define phyISFR_INT6 ((uint16_t)0x0040U) // 6 INT6
+#define phyISFR_ANC phyISFR_INT6         /* Auto-Negotiation complete */
 
-#define PHY_ISFR_INT5 ((uint16_t)0x0020U) // 5 INT5
-#define PHY_ISFR_RFD PHY_ISFR_INT5
-// 0 = Not source of interrupt
-// 1 = Remote Fault Detected
+#define phyISFR_INT5 ((uint16_t)0x0020U) // 5 INT5
+#define phyISFR_RFD phyISFR_INT5         /* Remote Fault Detected */
 
-#define PHY_ISFR_INT4 ((uint16_t)0x0010U) // 4 INT4
-#define PHY_ISFR_LD PHY_ISFR_INT4
-// 0 = Not source of interrupt
-// 1 = Link Down (link status negated)
+#define phyISFR_INT4 ((uint16_t)0x0010U) // 4 INT4
+#define phyISFR_LD phyISFR_INT4          /* Link Down (link status negated) */
 
-#define PHY_ISFR_INT3 ((uint16_t)0x0008U) // 3 INT3
-#define PHY_ISFR_ANLPA PHY_ISFR_INT3
-// 0 = Not source of interrupt
-// 1 = Auto-Negotiation LP Acknowledge
+#define phyISFR_INT3 ((uint16_t)0x0008U) // 3 INT3
+#define phyISFR_ANLPA phyISFR_INT3       /* Auto-Negotiation LP Acknowledge */
 
-#define PHY_ISFR_INT2 ((uint16_t)0x0004U) // 2 INT2
-#define PHY_ISFR_PDF PHY_ISFR_INT2
-// 0 = Not source of interrupt
-// 1 = Parallel Detection Fault
+#define phyISFR_INT2 ((uint16_t)0x0004U) // 2 INT2
+#define phyISFR_PDF phyISFR_INT2         /* Parallel Detection Fault */
 
-#define PHY_ISFR_INT1 ((uint16_t)0x0002U) // 1 INT1
-#define PHY_ISFR_ANPR PHY_ISFR_INT1
-// 0 = Not source of interrupt
-// 1 = Auto-Negotiation Page Received
+#define phyISFR_INT1 ((uint16_t)0x0002U) // 1 INT1
+#define phyISFR_ANPR phyISFR_INT1        /* Auto-Negotiation Page Received */
 
 /* Wakeup control and status register 3.32784 (WUCSR) ------------------------*/
-#define PHY_WUCSR_CLEAR_MASK ((uint16_t)0b0111101100001111) // 0x7B0F = 0b0111 1011 0000 1111
+#define phyWUCSR_CLEAR_MASK ((uint16_t)0b0111101100001111) // 0x7B0F = 0b0111 1011 0000 1111
+/*  BITS DESCRIPTION                                                                      TYPE   DEFAULT
+ *    15 Interface Disable                                                                 R/W        0b
+ *       0 = RMII interface enabled                                                       NASR
+ *       1 = RMII interface disabled. Outputs driven to a low level and inputs ignored. */
+#define phyWUCSR_RMII_ENL ((uint16_t)0x8000U)
 
-#define PHY_WUCSR_RMII_ENL ((uint16_t)0x8000U) // 15 Interface Disable                                                           \
-                                               // 0 = RMII interface enabled                                                     \
-                                               // 1 = RMII interface disabled. Outputs driven to a low level and inputs ignored. \
-                                               // R/W                                                                            \
-                                               // NASR                                                                           \
-                                               // 0b
+/* 14:13 LED1 Function Select                                                              R/W        0b
+ *       00 = LED1 functions as Link/Activity.                                            NASR
+ *       01 = LED1 functions as nINT.
+ *       10 = LED1 functions as nPME.
+ *       11 = LED1 functions as Link Speed. */
+#define phyWUCSR_LED1 ((uint16_t)0x6000U)
 
-#define PHY_WUCSR_LED1 ((uint16_t)0x6000U) // 14:13 LED1 Function Select                                       \
-                                           // 00 = LED1 functions as Link/Activity.                            \
-                                           // 01 = LED1 functions as nINT.                                     \
-                                           // 10 = LED1 functions as nPME.                                     \
-                                           // 11 = LED1 functions as Link Speed.                               \
-                                           // Note: Refer to Section 3.8.1, "LEDs" for additional information. \
-                                           // R/W                                                              \
-                                           // NASR                                                             \
-                                           // 0b
+/* 12:11 LED2 Function Select                                                              R/W        0b
+ *       00 = LED2 functions as Link Speed.                                               NASR
+ *       01 = LED2 functions as nINT.
+ *       10 = LED2 functions as nPME.
+ *       11 = LED2 functions as Link/Activity. */
+#define phyWUCSR_LED2 ((uint16_t)0x1800U)
 
-#define PHY_WUCSR_LED2 ((uint16_t)0x1800U) // 12:11 LED2 Function Select                                       \
-                                           // 00 = LED2 functions as Link Speed.                               \
-                                           // 01 = LED2 functions as nINT.                                     \
-                                           // 10 = LED2 functions as nPME.                                     \
-                                           // 11 = LED2 functions as Link/Activity.                            \
-                                           // Note: Refer to Section 3.8.1, "LEDs" for additional information. \
-                                           // R/W                                                              \
-                                           // NASR                                                             \
-                                           // 0b
+/*    10 RESERVED                                                                           RO         - */
 
-// 10 RESERVED RO -
+/*     9 nPME Self Clear                                                                   R/W        0b
+ *       0 = nPME pin is not self clearing.                                               NASR
+ *       1 = nPME pin is self clearing. */
+#define phyWUCSR_nPME ((uint16_t)0x0200U)
 
-#define PHY_WUCSR_nPME ((uint16_t)0x0200U) // 9 nPME Self Clear                                                       \
-                                           // 0 = nPME pin is not self clearing.                                      \
-                                           // 1 = nPME pin is self clearing.                                          \
-                                           // Note: When set, the de-assertion delay of the nPME signal is controlled \
-                                           // by the nPME Assert Delay bit of the Miscellaneous Configuration         \
-                                           // Register (MCFGR). Refer to Section 3.8.4, "Wake on LAN (WoL)"           \
-                                           // for additional information.                                             \
-                                           // R/W                                                                     \
-                                           // NASR                                                                    \
-                                           // 0b
+/*     8 WoL Configured                                                                    R/W        0b
+ *       This bit may be set by software after the WoL registers are configured. This     NASR
+ *       sticky bit (and all other WoL related register bits) is reset only via a power
+ *       cycle or a pin reset, allowing software to skip programming of the WoL registers
+ *       in response to a WoL event. */
+#define phyWUCSR_WoL ((uint16_t)0x0100U)
 
-#define PHY_WUCSR_WoL ((uint16_t)0x0100U) // 8 WoL Configured                                                                 \
-                                          // This bit may be set by software after the WoL registers are configured. This     \
-                                          // sticky bit (and all other WoL related register bits) is reset only via a power   \
-                                          // cycle or a pin reset, allowing software to skip programming of the WoL registers \
-                                          // in response to a WoL event.                                                      \
-                                          // Note: Refer to Section 3.8.4, "Wake on LAN (WoL)" for additional information.    \
-                                          // R/W/                                                                             \
-                                          // NASR                                                                             \
-                                          // 0b
+/*     7 Perfect DA Frame Received (PFDA_FR)                                              R/WC        0b
+ *       The MAC sets this bit upon receiving a valid frame with a destination address    NASR
+ *       that matches the physical address. */
+#define phyWUCSR_PFDA_FR ((uint16_t)0x0080U)
 
-#define PHY_WUCSR_PFDA_FR ((uint16_t)0x0080U) // 7 Perfect DA Frame Received (PFDA_FR)                                         \
-                                              // The MAC sets this bit upon receiving a valid frame with a destination address \
-                                              // that matches the physical address.                                            \
-                                              // R/WC/                                                                         \
-                                              // NASR                                                                          \
-                                              // 0b
+/*     6 that matches the physical address.                                               R/WC        0b
+ *       The MAC sets this bit upon receiving a valid remote Wakeup Frame.                NASR */
+#define phyWUCSR_WUFR ((uint16_t)0x0040U)
 
-#define PHY_WUCSR_WUFR ((uint16_t)0x0040U) // 6 Remote Wakeup Frame Received (WUFR)                             \
-                                           // The MAC sets this bit upon receiving a valid remote Wakeup Frame. \
-                                           // R/WC/                                                             \
-                                           // NASR                                                              \
-                                           // 0b
+/*     5 Magic Packet Received (MPR)                                                      R/WC        0b
+ *       The MAC sets this bit upon receiving a valid Magic Packet.                       NASR */
+#define phyWUCSR_MPR ((uint16_t)0x0020U)
 
-#define PHY_WUCSR_MPR ((uint16_t)0x0020U) // 5 Magic Packet Received (MPR)                              \
-                                          // The MAC sets this bit upon receiving a valid Magic Packet. \
-                                          // R/WC/                                                      \
-                                          // NASR                                                       \
-                                          // 0b
+/*     4 Broadcast Frame Received (BCAST_FR)                                              R/WC        0b
+ *       The MAC Sets this bit upon receiving a valid broadcast frame.                    NASR */
+#define phyWUCSR_BCAST_FR ((uint16_t)0x0010U)
 
-#define PHY_WUCSR_BCAST_FR ((uint16_t)0x0010U) // 4 Broadcast Frame Received (BCAST_FR)                         \
-                                               // The MAC Sets this bit upon receiving a valid broadcast frame. \
-                                               // R/WC/                                                         \
-                                               // NASR                                                          \
-                                               // 0b
+/*     3 Perfect DA Wakeup Enable (PFDA_EN)                                                R/W        0b
+ *       When set, remote wakeup mode is enabled and the MAC is capable of waking         NASR
+ *       up on receipt of a frame with a destination address that matches the physical
+ *       address of the device. The physical address is stored in the MAC Receive
+ *       Address A Register (RX_ADDRA), MAC Receive Address B Register
+ *       (RX_ADDRB) and MAC Receive Address C Register (RX_ADDRC). */
+#define phyWUCSR_PFDA_EN ((uint16_t)0x0008U)
 
-#define PHY_WUCSR_PFDA_EN ((uint16_t)0x0008U) // 3 Perfect DA Wakeup Enable (PFDA_EN)                                          \
-                                              // When set, remote wakeup mode is enabled and the MAC is capable of waking      \
-                                              // up on receipt of a frame with a destination address that matches the physical \
-                                              // address of the device. The physical address is stored in the MAC Receive      \
-                                              // Address A Register (RX_ADDRA), MAC Receive Address B Register                 \
-                                              // (RX_ADDRB) and MAC Receive Address C Register (RX_ADDRC).                     \
-                                              // R/W/                                                                          \
-                                              // NASR                                                                          \
-                                              // 0b
+/*     2 Wakeup Frame Enable (WUEN)                                                        R/W        0b
+ *       When set, remote wakeup mode is enabled and the MAC is capable of detecting      NASR
+ *       Wakeup Frames as programmed in the Wakeup Filter. */
+#define phyWUCSR_WUEN ((uint16_t)0x0004U)
 
-#define PHY_WUCSR_WUEN ((uint16_t)0x0004U) // 2 Wakeup Frame Enable (WUEN)                                                \
-                                           // When set, remote wakeup mode is enabled and the MAC is capable of detecting \
-                                           // Wakeup Frames as programmed in the Wakeup Filter.
+/*     1 Magic Packet Enable (MPEN)                                                        R/W        0b
+ *       When set, Magic Packet wakeup mode is enabled.                                   NASR */
+#define phyWUCSR_MPEN ((uint16_t)0x0002U)
 
-#define PHY_WUCSR_MPEN ((uint16_t)0x0002U) // 1 Magic Packet Enable (MPEN)                   \
-                                           // When set, Magic Packet wakeup mode is enabled. \
-                                           // R/W/                                           \
-                                           // NASR                                           \
-                                           // 0b
-
-#define PHY_WUCSR_BCST_EN ((uint16_t)0x0001U) // 0 Broadcast Wakeup Enable (BCST_EN)                                      \
-                                              // When set, remote wakeup mode is enabled and the MAC is capable of waking \
-                                              // up from a broadcast frame.
+/*     0 Broadcast Wakeup Enable (BCST_EN)                                                 R/W        0b
+ *       When set, remote wakeup mode is enabled and the MAC is capable of waking         NASR
+ *       up from a broadcast frame. */
+#define phyWUCSR_BCST_EN ((uint16_t)0x0001U)
 
 /* Send a reset command to a set of PHY-ports. */
 static uint32_t xPhyReset(EthernetPhy_t *pxPhyObject,
                           uint32_t ulPhyMask);
+
+static const char *pcPhyName(uint32_t ulPhyID)
+{
+    switch (ulPhyID)
+    {
+    case PHY_ID_LAN8720:
+        return "LAN8720";
+    case PHY_ID_LAN8742A:
+        return "LAN8742A";
+    // case PHY_ID_KSZ8051: // same ID as PHY_ID_KSZ8041
+    // case PHY_ID_KSZ8081: // same ID as PHY_ID_KSZ8041
+    case PHY_ID_KSZ8041:
+        return "KSZ8041";
+    case PHY_ID_KSZ8081MNXIA:
+        return "KSZ8081MNXIA";
+    case PHY_ID_KSZ8863:
+        return "KSZ8863";
+    case PHY_ID_DP83848I:
+        return "DP83848I";
+    default:
+        return "unknown";
+    }
+}
 
 static BaseType_t xHas_1F_PHYSPCS(uint32_t ulPhyID)
 {
@@ -352,7 +329,7 @@ static BaseType_t xHas_19_PHYCR(uint32_t ulPhyID)
 
     switch (ulPhyID)
     {
-    case PHY_ID_LAN8742A:
+    // case PHY_ID_LAN8742A:
     case PHY_ID_DP83848I:
         xResult = pdTRUE;
         break;
@@ -416,7 +393,7 @@ BaseType_t xPhyDiscover(EthernetPhy_t *pxPhyObject)
 
     if (pxPhyObject->xPortCount > 0)
     {
-        FreeRTOS_printf(("PHY ID %lX\n", pxPhyObject->ulPhyIDs[0]));
+        FreeRTOS_printf(("PHY ID %lX (%s)\n", pxPhyObject->ulPhyIDs[0], pcPhyName(pxPhyObject->ulPhyIDs[0])));
     }
 
     return pxPhyObject->xPortCount;
@@ -801,7 +778,7 @@ BaseType_t xPhyStartAutoNegotiation(EthernetPhy_t *pxPhyObject,
             {
                 uint32_t ulControlStatus;
 
-                pxPhyObject->fnPhyRead(xPhyAddress, 0x1E, &ulControlStatus);
+                pxPhyObject->fnPhyRead(xPhyAddress, phyREG_1E_IMR, &ulControlStatus);
 
                 switch (ulControlStatus & 0x07)
                 {
@@ -861,7 +838,7 @@ BaseType_t xPhyStartAutoNegotiation(EthernetPhy_t *pxPhyObject,
                 pxPhyObject->fnPhyRead(xPhyAddress, phyREG_10_PHYSTS, &ulRegValue);
             }
 
-            FreeRTOS_printf(("Autonego ready: %08lx: %s duplex %u mbit %s status\n",
+            FreeRTOS_printf(("Autonego ready: %08lx: %s duplex / %u mbit / link status %s\n",
                              ulRegValue,
                              (ulRegValue & phyPHYSTS_DUPLEX_STATUS) ? "full" : "half",
                              (ulRegValue & phyPHYSTS_SPEED_STATUS) ? 10 : 100,

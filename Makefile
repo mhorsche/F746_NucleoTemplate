@@ -37,6 +37,8 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 Src/main.c \
+Src/mqtt_task.c \
+Src/iperf_task.c \
 Src/freertos.c \
 Src/stm32f7xx_it.c \
 Src/stm32f7xx_hal_msp.c 
@@ -99,10 +101,19 @@ Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_Stream_B
 Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_TCP_IP.c \
 Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_TCP_WIN.c \
 Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/FreeRTOS_UDP_IP.c \
-Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/BufferManagement/BufferAllocation_1.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/BufferManagement/BufferAllocation_2.c \
 Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/Common/phyHandling.c \
 Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/STM32Fxx/NetworkInterface.c \
 Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/STM32Fxx/stm32fxx_hal_eth.c 
+
+# FreeRTOS+coreMQTT sources
+C_SOURCES +=  \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/network_transport/sockets_wrapper/freertos_plus_tcp/sockets_wrapper.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/network_transport/using_mbedtls/using_plaintext/using_plaintext.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/backoff_algorithm/source/backoff_algorithm.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/coreMQTT/source/core_mqtt_serializer.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/coreMQTT/source/core_mqtt_state.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/coreMQTT/source/core_mqtt.c 
 
 # ASM sources
 ASM_SOURCES =  \
@@ -175,7 +186,12 @@ C_INCLUDES =  \
 -IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/include \
 -IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/Compiler/GCC \
 -IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/include \
--IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/STM32Fxx 
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/portable/NetworkInterface/STM32Fxx \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/backoff_algorithm/source/include \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/coreMQTT/source/include \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/coreMQTT/source/interface \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/network_transport/sockets_wrapper/freertos_plus_tcp \
+-IMiddlewares/Third_Party/FreeRTOS-Plus/Source/Application-Protocols/network_transport/using_mbedtls/using_plaintext 
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

@@ -37,14 +37,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* Dimensions the arrays into which print messages are created. */
-#define dlMAX_PRINT_STRING_LENGTH 255
+// #define dlMAX_PRINT_STRING_LENGTH 255
 
 /* The size of the stream buffer used to pass messages from FreeRTOS tasks to
  * the thread that is responsible for making any calls that are necessary for the 
  * selected logging method. */
-#define dSTREAM_BUFFER_LENGTH_BYTES ((size_t)100)
-#define dSTREAM_BUFFER_TRIGGER_LEVEL_10 ((BaseType_t)10)
-#define LOG_MESSAGE_COUNT 16
+#define dSTREAM_BUFFER_LENGTH_BYTES ((size_t)128)
+// #define dSTREAM_BUFFER_TRIGGER_LEVEL_10 ((BaseType_t)10)
+#define LOG_MESSAGE_COUNT 32
 
 /* A block time of zero simply means don't block. */
 #define dlDONT_BLOCK 0
@@ -247,7 +247,7 @@ static void prvLoggingPrintf(const char *pcFormat, va_list xArgs)
   osStatus_t status;
   msgqueue_obj_t msg;
 
-  memset((uint8_t *)msg.str, 0x00, sizeof(msg.str));
+  // memset((uint8_t *)msg.str, 0x00, sizeof(msg.str));
   size_t len = vsnprintf(msg.str, sizeof(msg.str), pcFormat, xArgs);
   msg.len = len;
 
@@ -274,7 +274,7 @@ static void prvLoggingThread(void *pvParameters)
 {
   osStatus_t status;
   msgqueue_obj_t msg;
-  char buf[dSTREAM_BUFFER_LENGTH_BYTES];
+  // char buf[dSTREAM_BUFFER_LENGTH_BYTES];
 
   /* Infinite loop */
   for (;;)

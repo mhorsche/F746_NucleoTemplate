@@ -35,28 +35,16 @@
 #ifndef FREERTOS_IP_CONFIG_H
 #define FREERTOS_IP_CONFIG_H
 
-/* Prototype for the function used to print out.  In this case it prints to the
- * console before the network is connected then a UDP port after the network has
- * connected. */
-extern void vLoggingPrintf(const char *pcFormatString,
-                           ...);
-
-/* Set to 1 to print out debug messages.  If ipconfigHAS_DEBUG_PRINTF is set to
- * 1 then FreeRTOS_debug_printf should be defined to the function used to print
- * out the debugging messages. */
-#define ipconfigHAS_DEBUG_PRINTF 0
-#if (ipconfigHAS_DEBUG_PRINTF == 1)
-#define FreeRTOS_debug_printf(X) vLoggingPrintf X
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
-/* Set to 1 to print out non debugging messages, for example the output of the
- * FreeRTOS_netstat() command, and ping replies.  If ipconfigHAS_PRINTF is set to 1
- * then FreeRTOS_printf should be set to the function used to print out the
- * messages. */
-#define ipconfigHAS_PRINTF 1
-#if (ipconfigHAS_PRINTF == 1)
-#define FreeRTOS_printf(X) vLoggingPrintf X
-#endif
+#include "stm32f7xx_hal.h"
+
+/* Define names that will be used for DNS, LLMNR and NBNS searches. */
+#define mainHOST_NAME "stm32-nucleo"
+#define mainDEVICE_NICK_NAME "stm"
 
 /* Define the byte order of the target MCU (the MCU FreeRTOS+TCP is executing
  * on).  Valid options are pdFREERTOS_BIG_ENDIAN and pdFREERTOS_LITTLE_ENDIAN. */
@@ -73,12 +61,15 @@ extern void vLoggingPrintf(const char *pcFormatString,
  * performed, for example FreeRTOS_send() and FreeRTOS_recv().  The timeouts can be
  * set per socket, using setsockopt().  If not set, the times below will be
  * used as defaults. */
-#define ipconfigSOCK_DEFAULT_RECEIVE_BLOCK_TIME (2000)
+#define ipconfigSOCK_DEFAULT_RECEIVE_BLOCK_TIME (5000)
 #define ipconfigSOCK_DEFAULT_SEND_BLOCK_TIME (5000)
+
+#define ipconfigZERO_COPY_RX_DRIVER (1)
+#define ipconfigZERO_COPY_TX_DRIVER (1)
 
 /* Include support for LLMNR: Link-local Multicast Name Resolution
  * (non-Microsoft) */
-#define ipconfigUSE_LLMNR (0)
+#define ipconfigUSE_LLMNR (1)
 
 /* Include support for NBNS: NetBIOS Name Service (Microsoft) */
 #define ipconfigUSE_NBNS (0)
@@ -90,9 +81,10 @@ extern void vLoggingPrintf(const char *pcFormatString,
  * call to FreeRTOS_gethostbyname() will return immediately, without even creating
  * a socket. */
 #define ipconfigUSE_DNS_CACHE (1)
-#define ipconfigDNS_CACHE_NAME_LENGTH (32)
+#define ipconfigDNS_CACHE_NAME_LENGTH (16)
 #define ipconfigDNS_CACHE_ENTRIES (4)
-#define ipconfigDNS_REQUEST_ATTEMPTS (2)
+#define ipconfigDNS_REQUEST_ATTEMPTS (4)
+#define ipconfigDNS_CACHE_ADDRESSES_PER_ENTRY (4)
 
 /* The IP stack executes it its own task (although any application task can make
  * use of its services through the published sockets API). ipconfigUDP_TASK_PRIORITY
@@ -104,6 +96,9 @@ extern void vLoggingPrintf(const char *pcFormatString,
  * the priority assigned to the task executing the IP stack relative to the
  * priority assigned to tasks that use the IP stack. */
 #define ipconfigIP_TASK_PRIORITY (configMAX_PRIORITIES - 2)
+#define ipconfigEMAC_HANDLER_TASK_PRIORITY (configMAX_PRIORITIES - 1)
+#define ipconfigIPERF_PRIORITY_IPERF_TASK 6
+#define ipconfigMQTT_PRIORITY_MQTT_TASK 7
 
 /* The size, in words (not bytes), of the stack allocated to the FreeRTOS+TCP
  * task.  This setting is less important when the FreeRTOS Win32 simulator is used
@@ -112,12 +107,17 @@ extern void vLoggingPrintf(const char *pcFormatString,
  * http://www.freertos.org/Stacks-and-stack-overflow-checking.html */
 #define ipconfigIP_TASK_STACK_SIZE_WORDS (configMINIMAL_STACK_SIZE * 5)
 
-/* ipconfigRAND32() is called by the IP stack to generate random numbers for
+/* Default the size of the stack used by the EMAC deferred handler task to twice
+ * the size of the stack used by the idle task - but allow this to be overridden in
+ * FreeRTOSConfig.h as configMINIMAL_STACK_SIZE is a user definable constant. */
+#define ipconfigEMAC_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE * 5)
+
+  /* ipconfigRAND32() is called by the IP stack to generate random numbers for
  * things such as a DHCP transaction number or initial sequence number.  Random
  * number generation is performed via this macro to allow applications to use their
  * own random number generation method.  For example, it might be possible to
  * generate a random number by sampling noise on an analogue input. */
-extern UBaseType_t uxRand();
+  extern UBaseType_t uxRand();
 #define ipconfigRAND32() uxRand()
 
 /* If ipconfigUSE_NETWORK_EVENT_HOOK is set to 1 then FreeRTOS+TCP will call the
@@ -148,7 +148,9 @@ extern UBaseType_t uxRand();
  * set to 1 if a valid configuration cannot be obtained from a DHCP server for any
  * reason.  The static configuration used is that passed into the stack by the
  * FreeRTOS_IPInit() function call. */
-#define ipconfigUSE_DHCP 0
+#define ipconfigUSE_DHCP 1
+#define ipconfigDHCP_REGISTER_HOSTNAME 1
+#define ipconfigDHCP_USES_UNICAST 1
 
 /* When ipconfigUSE_DHCP is set to 1, DHCP requests will be sent out at
  * increasing time intervals until either a reply is received from a DHCP server
@@ -157,7 +159,7 @@ extern UBaseType_t uxRand();
  * static IP address passed as a parameter to FreeRTOS_IPInit() if the
  * re-transmission time interval reaches ipconfigMAXIMUM_DISCOVER_TX_PERIOD without
  * a DHCP reply being received. */
-#define ipconfigMAXIMUM_DISCOVER_TX_PERIOD (120000 / portTICK_PERIOD_MS)
+#define ipconfigMAXIMUM_DISCOVER_TX_PERIOD (pdMS_TO_TICKS(30000))
 
 /* The ARP cache is a table that maps IP addresses to MAC addresses.  The IP
  * stack can only send a UDP message to a remove IP address if it knowns the MAC
@@ -198,7 +200,9 @@ extern UBaseType_t uxRand();
  * are available to the IP stack.  The total number of network buffers is limited
  * to ensure the total amount of RAM that can be consumed by the IP stack is capped
  * to a pre-determinable value. */
-#define ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS 60
+#define iptraceFAILED_TO_OBTAIN_NETWORK_BUFFER() configASSERT(1 == 0)
+
+#define ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS (64)
 
 /* A FreeRTOS queue is used to send events from application tasks to the IP
  * stack.  ipconfigEVENT_QUEUE_LENGTH sets the maximum number of events that can
@@ -238,7 +242,7 @@ extern UBaseType_t uxRand();
  * lower value can save RAM, depending on the buffer management scheme used.  If
  * ipconfigCAN_FRAGMENT_OUTGOING_PACKETS is 1 then (ipconfigNETWORK_MTU - 28) must
  * be divisible by 8. */
-#define ipconfigNETWORK_MTU 1500
+#define ipconfigNETWORK_MTU (1500)
 
 /* Set ipconfigUSE_DNS to 1 to include a basic DNS client/resolver.  DNS is used
  * through the FreeRTOS_gethostbyname() API function. */
@@ -273,7 +277,7 @@ extern UBaseType_t uxRand();
 
 /* The windows simulator cannot really simulate MAC interrupts, and needs to
  * block occasionally to allow other tasks to run. */
-#define configWINDOWS_MAC_INTERRUPT_SIMULATOR_DELAY (20 / portTICK_PERIOD_MS)
+#define configWINDOWS_MAC_INTERRUPT_SIMULATOR_DELAY (2 / portTICK_PERIOD_MS)
 
 /* Advanced only: in order to access 32-bit fields in the IP packets with
  * 32-bit memory instructions, all packets will be stored 32-bit-aligned, plus 16-bits.
@@ -285,14 +289,14 @@ extern UBaseType_t uxRand();
  * TCP socket will use up to 2 x 6 descriptors, meaning that it can have 2 x 6
  * outstanding packets (for Rx and Tx).  When using up to 10 TP sockets
  * simultaneously, one could define TCP_WIN_SEG_COUNT as 120. */
-#define ipconfigTCP_WIN_SEG_COUNT 240
+#define ipconfigTCP_WIN_SEG_COUNT 64
 
 /* Each TCP socket has a circular buffers for Rx and Tx, which have a fixed
  * maximum size.  Define the size of Rx buffer for TCP sockets. */
-#define ipconfigTCP_RX_BUFFER_LENGTH (3 * 1460)
+#define ipconfigTCP_RX_BUFFER_LENGTH (3 * ipconfigTCP_MSS)
 
 /* Define the size of Tx buffer for TCP sockets. */
-#define ipconfigTCP_TX_BUFFER_LENGTH (2 * 1460)
+#define ipconfigTCP_TX_BUFFER_LENGTH (2 * ipconfigTCP_MSS)
 
 /* When using call-back handlers, the driver may check if the handler points to
  * real program memory (RAM or flash) or just has a random non-zero value. */
@@ -307,6 +311,114 @@ extern UBaseType_t uxRand();
 #define ipconfigTCP_KEEP_ALIVE (1)
 #define ipconfigTCP_KEEP_ALIVE_INTERVAL (20) /* in seconds */
 
-#define portINLINE __inline
+/* If ipconfigUSE_DHCP_HOOK is set to 1 then FreeRTOS+TCP will call an 
+ * application provided hook (or 'callback') function called 
+ * xApplicationDHCPUserHook() both before the initial discovery 
+ * packet is sent, and after a DHCP offer has been received - the hook 
+ * function can be used to terminate the DHCP process at either one of 
+ * these two phases in the DHCP sequence. For example, the application 
+ * writer can effectively disable DHCP, even when ipconfigUSE_DHCP is set 
+ * to 1, by terminating the DHCP process before the initial discovery 
+ * packet is sent. As another example, the application writer can check a 
+ * static IP address is compatible with the network to which the device is 
+ * connected by receiving an IP address offer from a DHCP server, but then 
+ * terminating the DHCP process without sending a request packet to claim 
+ * the offered IP address. */
+#define ipconfigUSE_DHCP_HOOK (1)
+
+  /* UDP Logging related constants follow.  The standard UDP logging facility
+writes formatted strings to a buffer, and creates a task that removes messages
+from the buffer and sends them to the UDP address and port defined by the
+constants that follow. */
+
+  /* Prototype for the function used to print out.  In this case the standard
+UDP logging facility is used. */
+  extern void vLoggingPrintf(const char *pcFormatString,
+                             ...);
+
+/* Set to 1 to print out debug messages.  If ipconfigHAS_DEBUG_PRINTF is set to
+ * 1 then FreeRTOS_debug_printf should be defined to the function used to print
+ * out the debugging messages. */
+#define ipconfigHAS_DEBUG_PRINTF 1
+#if (ipconfigHAS_DEBUG_PRINTF == 1)
+#define FreeRTOS_debug_printf(X) vLoggingPrintf X
+#endif
+
+/* Set to 1 to print out non debugging messages, for example the output of the
+ * FreeRTOS_netstat() command, and ping replies.  If ipconfigHAS_PRINTF is set to 1
+ * then FreeRTOS_printf should be set to the function used to print out the
+ * messages. */
+#define ipconfigHAS_PRINTF 1
+#if (ipconfigHAS_PRINTF == 1)
+#define FreeRTOS_printf(X) vLoggingPrintf X
+#endif
+
+/* The address of an echo server that will be used by the two demo echo client
+ * tasks:
+ * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/TCP_Echo_Clients.html,
+ * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/UDP_Echo_Clients.html. */
+#define ipconfigECHO_SERVER_ADDR0 192
+#define ipconfigECHO_SERVER_ADDR1 168
+#define ipconfigECHO_SERVER_ADDR2 178
+#define ipconfigECHO_SERVER_ADDR3 16
+#define ipconfigTCP_ECHO_CLIENT_PORT 7
+
+/* The UDP port to which print messages are sent. */
+#define ipconfigPRINT_PORT (15000)
+
+/* Default MAC address configuration.  The demo creates a virtual network
+ * connection that uses this MAC address by accessing the raw Ethernet/WiFi data
+ * to and from a real network connection on the host PC.  See the
+ * configNETWORK_INTERFACE_TO_USE definition above for information on how to
+ * configure the real network connection to use. */
+#define ipconfigMAC_ADDR0 0x00
+#define ipconfigMAC_ADDR1 0x11
+#define ipconfigMAC_ADDR2 0x22
+#define ipconfigMAC_ADDR3 0x33
+#define ipconfigMAC_ADDR4 0x44
+#define ipconfigMAC_ADDR5 0x55
+
+/* Default IP address configuration.  Used in ipconfigUSE_DHCP is set to 0, or
+ * ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
+#define ipconfigIP_ADDR0 192
+#define ipconfigIP_ADDR1 168
+#define ipconfigIP_ADDR2 178
+#define ipconfigIP_ADDR3 200
+
+/* Default gateway IP address configuration.  Used in ipconfigUSE_DHCP is set to
+ * 0, or ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
+#define ipconfigGATEWAY_ADDR0 192
+#define ipconfigGATEWAY_ADDR1 168
+#define ipconfigGATEWAY_ADDR2 178
+#define ipconfigGATEWAY_ADDR3 1
+
+/* Default DNS server configuration.  OpenDNS addresses are 208.67.222.222 and
+ * 208.67.220.220.  Used in ipconfigUSE_DHCP is set to 0, or ipconfigUSE_DHCP is
+ * set to 1 but a DNS server cannot be contacted.*/
+#define ipconfigDNS_SERVER_ADDR0 208
+#define ipconfigDNS_SERVER_ADDR1 67
+#define ipconfigDNS_SERVER_ADDR2 222
+#define ipconfigDNS_SERVER_ADDR3 222
+
+/* Default netmask configuration.  Used in ipconfigUSE_DHCP is set to 0, or
+ * ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
+#define ipconfigNET_MASK0 255
+#define ipconfigNET_MASK1 255
+#define ipconfigNET_MASK2 255
+#define ipconfigNET_MASK3 0
+
+  // #define ipconfigFTP_ZERO_COPY_ALIGNED_WRITES 0
+  // #define ipconfigDNS_USE_CALLBACKS 0
+  // #define ipconfigSUPPORT_SIGNALS 0
+
+  // #define ipconfigMAC_INTERRUPT_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
+
+  // #define ipconfigUSE_CALLBACKS 1
+
+  // #define ipconfigCHECK_IP_QUEUE_SPACE 1
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* FREERTOS_IP_CONFIG_H */

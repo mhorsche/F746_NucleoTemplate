@@ -1,38 +1,13 @@
 /**
-  ******************************************************************************
-  * @file    GPIO/GPIO_IOToggle/Src/main.c
-  * @author  MCD Application Team
-  * @brief   This example describes how to configure and use GPIOs through
-  *          the STM32F7xx HAL API.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+ * @file main.c
+ * @author your name (you@domain.com)
+ * @brief 
+ * @version 0.1
+ * @date 2021-11-18
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -69,6 +44,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static UBaseType_t ulNextRand;
 RNG_HandleTypeDef hrng;
 
 /* Set the following constant to pdTRUE to log using the method indicated by the
@@ -78,20 +54,13 @@ RNG_HandleTypeDef hrng;
  * then UDP messages are sent to the IP address configured as the echo server
  * address (see the configECHO_SERVER_ADDR0 definitions in FreeRTOSConfig.h) and
  * the port number set by configPRINT_PORT in FreeRTOSConfig.h. */
-const BaseType_t xLogToUART = pdTRUE, xLogToSWO = pdTRUE, xLogToUDP = pdTRUE;
+const BaseType_t xLogToUART = pdTRUE, xLogToSWO = pdFALSE, xLogToUDP = pdTRUE;
 
-osThreadId_t tid_startup;
-const osThreadAttr_t StartupTask_attributes =
-    {
-        .name = "start",
-        .stack_size = configMINIMAL_STACK_SIZE * 5,
-        .priority = (osPriority_t)osPriorityBelowNormal,
-};
 osThreadId_t tid_led;
 const osThreadAttr_t LedTask_attributes =
     {
         .name = "led",
-        .stack_size = configMINIMAL_STACK_SIZE * 5,
+        .stack_size = configMINIMAL_STACK_SIZE * 5, /* Need ~500 byte due to printf (logging) */
         .priority = (osPriority_t)osPriorityBelowNormal1,
 };
 
@@ -99,19 +68,24 @@ const osThreadAttr_t LedTask_attributes =
 normally be read from an EEPROM and not hard coded (in real deployed
 applications).*/
 static uint8_t ucMACAddress[6] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
+// static uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5};
 
 /* Define the network addressing.  These parameters will be used if either
-ipconfigUDE_DHCP is 0 or if ipconfigUSE_DHCP is 1 but DHCP auto configuration
-failed. */
-static const uint8_t ucIPAddress[4] = {192, 168, 178, 200};
+ * ipconfigUDE_DHCP is 0 or if ipconfigUSE_DHCP is 1 but DHCP auto configuration
+ * failed. */
+static const uint8_t ucIPAddress[4] = {192, 168, 178, 201};
+// static const uint8_t ucIPAddress[4] = {ipconfigIP_ADDR0, ipconfigIP_ADDR1, ipconfigIP_ADDR2, ipconfigIP_ADDR3};
 static const uint8_t ucNetMask[4] = {255, 255, 255, 0};
+// static const uint8_t ucNetMask[4] = {ipconfigNET_MASK0, ipconfigNET_MASK1, ipconfigNET_MASK2, ipconfigNET_MASK3};
 static const uint8_t ucGatewayAddress[4] = {192, 168, 178, 1};
-
-/* The following is the address of an OpenDNS server. */
+// static const uint8_t ucGatewayAddress[4] = {ipconfigGATEWAY_ADDR0, ipconfigGATEWAY_ADDR1, ipconfigGATEWAY_ADDR2, ipconfigGATEWAY_ADDR3};
 static const uint8_t ucDNSServerAddress[4] = {208, 67, 222, 222};
+// static const uint8_t ucDNSServerAddress[4] = {ipconfigDNS_SERVER_ADDR0, ipconfigDNS_SERVER_ADDR1, ipconfigDNS_SERVER_ADDR2, ipconfigDNS_SERVER_ADDR3};
 
 /* Private function prototypes -----------------------------------------------*/
-static void prvStartupTask(void *pvParameters);
+extern void vStartHighResolutionTimer(void);     /* @see freertos.c */
+extern void vShowTaskTable(BaseType_t aDoClear); /* @see freertos.c */
+
 static void prvLedTask(void *pvParameters);
 
 static void SystemClock_Config(void);
@@ -132,21 +106,16 @@ int main(void)
   /* Enable D-Cache */
   SCB_EnableDCache();
 
-  /* This sample code shows how to use GPIO HAL API to toggle GPIOA-GPIO_PIN_5 IO
-    in an infinite loop. It is possible to connect a LED between GPIOA-GPIO_PIN_5
-    output and ground via a 330ohm resistor to see this external LED blink.
-    Otherwise an oscilloscope can be used to see the output GPIO signal */
-
   /* STM32F7xx HAL library initialization:
-       - Configure the Flash ART accelerator
-       - Systick timer is configured by default as source of time base, but user 
-         can eventually implement his proper time base source (a general purpose 
-         timer for example or other time source), keeping in mind that Time base 
-         duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
-         handled in milliseconds basis.
-       - Set NVIC Group Priority to 4
-       - Low Level Initialization
-     */
+   *   - Configure the Flash ART accelerator
+   *   - Systick timer is configured by default as source of time base, but user 
+   *     can eventually implement his proper time base source (a general purpose 
+   *     timer for example or other time source), keeping in mind that Time base 
+   *     duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
+   *     handled in milliseconds basis.
+   *   - Set NVIC Group Priority to 4
+   *   - Low Level Initialization
+   */
   HAL_Init();
   NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4); //https://www.freertos.org/RTOS-Cortex-M3-M4.html
 
@@ -164,6 +133,11 @@ int main(void)
   BSP_LED_Init(LED_GREEN);
   BSP_LED_Init(LED_BLUE);
 
+  /* Initialize logging for libraries that depend on it. */
+  uint32_t ulLoggingIPAddress = 0;
+  ulLoggingIPAddress = FreeRTOS_inet_addr_quick(ipconfigECHO_SERVER_ADDR0, ipconfigECHO_SERVER_ADDR1, ipconfigECHO_SERVER_ADDR2, ipconfigECHO_SERVER_ADDR3);
+  vLoggingInit(xLogToUART, xLogToSWO, xLogToUDP, ulLoggingIPAddress, ipconfigPRINT_PORT);
+
   /* Initialise the RTOS's TCP/IP stack.  The tasks that use the network
    * are created in the vApplicationIPNetworkEventHook() hook function
    * below.  The hook function is called when the network connects. */
@@ -174,14 +148,8 @@ int main(void)
   }
   FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
 
-  /* Initialize logging for libraries that depend on it. */
-  uint32_t ulLoggingIPAddress = 0;
-  ulLoggingIPAddress = FreeRTOS_inet_addr_quick(configECHO_SERVER_ADDR0, configECHO_SERVER_ADDR1, configECHO_SERVER_ADDR2, configECHO_SERVER_ADDR3);
-  vLoggingInit(xLogToUART, xLogToSWO, xLogToUDP, ulLoggingIPAddress, configPRINT_PORT);
-
   /* Definition and creation of FreeRTOS Threads (Tasks) */
-  tid_startup = osThreadNew(prvStartupTask, NULL, &StartupTask_attributes);
-  // tid_led = osThreadNew(prvLedTask, NULL, &LedTask_attributes);
+  tid_led = osThreadNew(prvLedTask, NULL, &LedTask_attributes);
 
   /* Init and start scheduler */
   osKernelInitialize(); /* Call init function for freertos objects (in freertos.c) */
@@ -194,22 +162,17 @@ int main(void)
   };
 }
 
-static void
-prvStartupTask(void *pvParameters)
+/**
+ * @brief  Use by the pseudo random number generator.
+ */
+UBaseType_t uxRand(void)
 {
-  uint32_t cnt = 0;
+  const uint32_t ulMultiplier = 0x015a4e35UL, ulIncrement = 1UL;
 
-  for (;;)
-  {
-    LogInfo(("## prvStartupTask %d Loop ##\r\n", cnt));
+  /* Utility function to generate a pseudo random number. */
 
-    /* Toggle green LED and write command via SWO/SWV */
-    BSP_LED_Toggle(LED_GREEN);
-    osDelay(1000);
-
-    /* Increment loop counter */
-    cnt++;
-  }
+  ulNextRand = (ulMultiplier * ulNextRand) + ulIncrement;
+  return ((int)(ulNextRand >> 16UL) & 0x7fffUL);
 }
 
 static void
@@ -219,14 +182,15 @@ prvLedTask(void *pvParameters)
 
   for (;;)
   {
-    LogInfo(("** prvLedTask %d Loop **\r\n", cnt));
+    /* Show task manager every 10 iterations */
+    if (cnt++ % 10 == 9)
+    {
+      // vShowTaskTable(pdFALSE);
+    }
 
     /* Toggle blue LED and write command via SWO/SWV */
-    BSP_LED_Toggle(LED_BLUE);
-    osDelay(500);
-
-    /* Increment loop counter */
-    cnt++;
+    BSP_LED_Toggle(LED_GREEN);
+    osDelay(1000);
   }
 }
 

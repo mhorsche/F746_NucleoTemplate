@@ -75,8 +75,8 @@
    ETH_DMA_IT_FBE | ETH_DMA_IT_RWT | ETH_DMA_IT_RPS | ETH_DMA_IT_RBU | ETH_DMA_IT_R |  \
    ETH_DMA_IT_TU | ETH_DMA_IT_RO | ETH_DMA_IT_TJT | ETH_DMA_IT_TPS | ETH_DMA_IT_T)
 
-#ifndef niEMAC_HANDLER_TASK_PRIORITY
-#define niEMAC_HANDLER_TASK_PRIORITY configMAX_PRIORITIES - 1
+#ifndef ipconfigEMAC_HANDLER_TASK_PRIORITY
+#define ipconfigEMAC_HANDLER_TASK_PRIORITY configMAX_PRIORITIES - 1
 #endif
 
 //#define ipFRAGMENT_OFFSET_BIT_MASK          ( ( uint16_t ) 0x0fff ) /* The bits in the two byte IP header field that make up the fragment offset value. */
@@ -127,8 +127,8 @@
 /* Default the size of the stack used by the EMAC deferred handler task to twice
  * the size of the stack used by the idle task - but allow this to be overridden in
  * FreeRTOSConfig.h as configMINIMAL_STACK_SIZE is a user definable constant. */
-#ifndef configEMAC_TASK_STACK_SIZE
-#define configEMAC_TASK_STACK_SIZE (5 * configMINIMAL_STACK_SIZE)
+#ifndef ipconfigEMAC_TASK_STACK_SIZE
+#define ipconfigEMAC_TASK_STACK_SIZE (5 * configMINIMAL_STACK_SIZE)
 #endif
 
 /* Two choices must be made: RMII versus MII,
@@ -495,8 +495,8 @@ xNetworkInterfaceInitialise(void)
 	   * to it.  The task's handle is stored in xEMACTaskHandle so interrupts can
 	   * notify the task when there is something to process. */
       if (xTaskCreate(prvEMACHandlerTask, "EMAC",
-                      configEMAC_TASK_STACK_SIZE, NULL,
-                      niEMAC_HANDLER_TASK_PRIORITY,
+                      ipconfigEMAC_TASK_STACK_SIZE, NULL,
+                      ipconfigEMAC_HANDLER_TASK_PRIORITY,
                       &xEMACTaskHandle) == pdPASS)
       {
         /* The xTXDescriptorSemaphore and the task are created successfully. */
