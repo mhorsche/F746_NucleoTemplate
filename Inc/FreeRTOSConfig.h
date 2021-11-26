@@ -63,7 +63,9 @@ extern uint64_t ullGetMicrosecondTime(void);
 #define configMAX_TASK_NAME_LEN (16)
 #define configGENERATE_RUN_TIME_STATS 1
 #define configUSE_TRACE_FACILITY 1
-#define configUSE_STATS_FORMATTING_FUNCTIONS 1
+/* Set configUSE_STATS_FORMATTING_FUNCTIONS to 2 to include the stats formatting
+ * functions but without including stdio.h here. */
+#define configUSE_STATS_FORMATTING_FUNCTIONS 2
 #define configUSE_16_BIT_TICKS 0
 #define configUSE_MUTEXES 1
 #define configQUEUE_REGISTRY_SIZE 8
@@ -78,7 +80,7 @@ extern uint64_t ullGetMicrosecondTime(void);
 
 /* Hook function related definitions. */
 #define configUSE_IDLE_HOOK 0
-#define configUSE_TICK_HOOK 0
+#define configUSE_TICK_HOOK 1
 #define configCHECK_FOR_STACK_OVERFLOW 1
 #define configUSE_MALLOC_FAILED_HOOK 1
 #define configUSE_DAEMON_TASK_STARTUP_HOOK 0
@@ -112,7 +114,8 @@ to exclude the API function. */
  * The CMSIS-RTOS V2 FreeRTOS wrapper is dependent on the heap implementation used
  * by the application thus the correct define need to be enabled below
  */
-#define USE_FreeRTOS_HEAP_4
+#define USE_FREERTOS_HEAP_5
+#define configAPPLICATION_ALLOCATED_HEAP 1
 
 /* Cortex-M specific definitions. */
 #ifdef __NVIC_PRIO_BITS

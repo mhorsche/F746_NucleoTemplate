@@ -62,6 +62,28 @@
 #define ipconfigMQTT_PRIORITY_MQTT_TASK 3
 #endif
 
+#ifndef ipconfigMQTT_BROKER_ENDPOINT
+/**
+ * @brief MQTT broker end point to connect to.
+ *
+ * @note If you would like to setup an MQTT broker for running this demo,
+ * please see `mqtt_broker_setup.txt`.
+ *
+ * #define ipconfigMQTT_BROKER_ENDPOINT     "insert here."
+ */
+#error "Define ipconfigMQTT_BROKER_ENDPOINT in FreeRTOSIPConfig.h (e.g '192.168.2.1')."
+#endif
+
+#ifndef ipconfigMQTT_BROKER_PORT
+/**
+ * @brief The port to use for the demo.
+ *
+ * #define ipconfigMQTT_BROKER_PORT         ( insert here. )
+ */
+#error "Using default MQTT port number '1883'. Define ipconfigMQTT_BROKER_PORT in FreeRTOSIPConfig.h to avoid this warning."
+#define ipconfigMQTT_BROKER_PORT (1883)
+#endif
+
 /**
  * @brief The maximum number of retries for network operation with server.
  */
@@ -90,7 +112,7 @@
  * The topic name starts with the client identifier to ensure that each demo
  * interacts with a unique topic name.
  */
-#define mqtttaskTOPIC ipconfigCLIENT_IDENTIFIER "/example/topic"
+#define mqtttaskTOPIC ipconfigCLIENT_IDENTIFIER "status"
 
 /**
  * @brief The number of topic filters to subscribe.
@@ -141,44 +163,6 @@
 
 #define MILLISECONDS_PER_SECOND (1000U)                                      /**< @brief Milliseconds per second. */
 #define MILLISECONDS_PER_TICK (MILLISECONDS_PER_SECOND / configTICK_RATE_HZ) /**< Milliseconds per FreeRTOS tick. */
-
-/**
- * @brief The MQTT client identifier used in this example.  Each client identifier
- * must be unique so edit as required to ensure no two clients connecting to the
- * same broker use the same client identifier.
- *
- *!!! Please note a #defined constant is used for convenience of demonstration
- *!!! only.  Production devices can use something unique to the device that can
- *!!! be read by software, such as a production serial number, instead of a
- *!!! hard coded constant.
- *
- * #define ipconfigCLIENT_IDENTIFIER        "insert here."
- */
-
-/**
- * @brief MQTT broker end point to connect to.
- *
- * @note If you would like to setup an MQTT broker for running this demo,
- * please see `mqtt_broker_setup.txt`.
- *
- * #define ipconfigMQTT_BROKER_ENDPOINT     "insert here."
- */
-#define ipconfigMQTT_BROKER_ENDPOINT "192.168.178.101"
-
-/**
- * @brief The port to use for the demo.
- *
- * #define ipconfigMQTT_BROKER_PORT         ( insert here. )
- */
-#define ipconfigMQTT_BROKER_PORT (1883)
-
-/**
- * @brief Set the stack size of the main demo task.
- *
- * In the Windows port, this stack only holds a structure. The actual
- * stack is created by an operating system thread.
- */
-#define ipconfigDEMO_STACKSIZE configMINIMAL_STACK_SIZE
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -403,45 +387,45 @@ static void prvMQTTDemoTask(void *pvParameters)
      * maximum number of attempts are reached or the maximum timeout value is
      * reached. The function below returns a failure status if the TCP connection
      * cannot be established to the broker after the configured number of attempts. */
-    // xNetworkStatus = prvConnectToServerWithBackoffRetries(&xNetworkContext);
-    // configASSERT(xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS);
+    xNetworkStatus = prvConnectToServerWithBackoffRetries(&xNetworkContext);
+    configASSERT(xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS);
     BSP_LED_On(LED_BLUE);
 
     vTaskDelay(mqtttaskDELAY_BETWEEN_DEMO_ITERATIONS);
 
-    // /* Sends an MQTT Connect packet over the already connected TCP socket,
-    //  * and waits for a connection acknowledgment (CONNACK) packet. */
-    // LogInfo(("Creating an MQTT connection to %s.", ipconfigMQTT_BROKER_ENDPOINT));
-    // prvCreateMQTTConnectionWithBroker(&xMQTTContext, &xNetworkContext);
+    /* Sends an MQTT Connect packet over the already connected TCP socket,
+     * and waits for a connection acknowledgment (CONNACK) packet. */
+    LogInfo(("Creating an MQTT connection to %s.", ipconfigMQTT_BROKER_ENDPOINT));
+    prvCreateMQTTConnectionWithBroker(&xMQTTContext, &xNetworkContext);
 
-    // /**************************** Subscribe. ******************************/
+    /**************************** Subscribe. ******************************/
 
     // /* If server rejected the subscription request, attempt to resubscribe to
     //  * the topic. Attempts are made according to the exponential backoff retry
     //  * strategy declared in backoff_algorithm.h. */
     // prvMQTTSubscribeWithBackoffRetries(&xMQTTContext);
 
-    // /******************* Publish and Keep Alive Loop. *********************/
-    // /* Publish messages with QoS0, then send and process Keep Alive messages. */
-    // for (ulPublishCount = 0; ulPublishCount < ulMaxPublishCount; ulPublishCount++)
-    // {
-    //   LogInfo(("Publish to the MQTT topic %s.", mqtttaskTOPIC));
-    //   prvMQTTPublishToTopic(&xMQTTContext);
+    /******************* Publish and Keep Alive Loop. *********************/
+    /* Publish messages with QoS0, then send and process Keep Alive messages. */
+    for (ulPublishCount = 0; ulPublishCount < ulMaxPublishCount; ulPublishCount++)
+    {
+      LogInfo(("Publish to the MQTT topic %s.", mqtttaskTOPIC));
+      prvMQTTPublishToTopic(&xMQTTContext);
 
-    //   /* Process the incoming publish echo. Since the application subscribed
-    //    * to the same topic, the broker will send the same publish message
-    //    * back to the application. */
-    //   LogInfo(("Attempt to receive publish message from broker."));
-    //   xMQTTStatus = MQTT_ProcessLoop(&xMQTTContext,
-    //                                  mqtttaskPROCESS_LOOP_TIMEOUT_MS);
-    //   configASSERT(xMQTTStatus == MQTTSuccess);
+      // /* Process the incoming publish echo. Since the application subscribed
+      //  * to the same topic, the broker will send the same publish message
+      //  * back to the application. */
+      // LogInfo(("Attempt to receive publish message from broker."));
+      // xMQTTStatus = MQTT_ProcessLoop(&xMQTTContext,
+      //                                mqtttaskPROCESS_LOOP_TIMEOUT_MS);
+      // configASSERT(xMQTTStatus == MQTTSuccess);
 
-    //   /* Leave the connection idle for some time. */
-    //   LogInfo(("Keeping Connection Idle..."));
-    //   vTaskDelay(mqtttaskDELAY_BETWEEN_PUBLISHES);
-    // }
+      /* Leave the connection idle for some time. */
+      LogInfo(("Keeping Connection Idle..."));
+      vTaskDelay(mqtttaskDELAY_BETWEEN_PUBLISHES);
+    }
 
-    // /******************** Unsubscribe from the topic. *********************/
+    /******************** Unsubscribe from the topic. *********************/
     // LogInfo(("Unsubscribe from the MQTT topic %s.", mqtttaskTOPIC));
     // prvMQTTUnsubscribeFromTopic(&xMQTTContext);
 
@@ -450,35 +434,33 @@ static void prvMQTTDemoTask(void *pvParameters)
     //                                mqtttaskPROCESS_LOOP_TIMEOUT_MS);
     // configASSERT(xMQTTStatus == MQTTSuccess);
 
-    // /**************************** Disconnect. *****************************/
+    /**************************** Disconnect. *****************************/
 
-    // /* Send an MQTT Disconnect packet over the connected TCP socket.
-    //  * There is no corresponding response for a disconnect packet. After
-    //  * sending the disconnect, the client must close the network connection. */
-    // LogInfo(("Disconnecting the MQTT connection with %s.",
-    //          ipconfigMQTT_BROKER_ENDPOINT));
-    // xMQTTStatus = MQTT_Disconnect(&xMQTTContext);
-    // configASSERT(xMQTTStatus == MQTTSuccess);
+    /* Send an MQTT Disconnect packet over the connected TCP socket.
+     * There is no corresponding response for a disconnect packet. After
+     * sending the disconnect, the client must close the network connection. */
+    LogInfo(("Disconnecting the MQTT connection with %s.",
+             ipconfigMQTT_BROKER_ENDPOINT));
+    xMQTTStatus = MQTT_Disconnect(&xMQTTContext);
+    configASSERT(xMQTTStatus == MQTTSuccess);
 
     /* Close the network connection. */
     xNetworkStatus = Plaintext_FreeRTOS_Disconnect(&xNetworkContext);
     configASSERT(xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS);
     BSP_LED_Off(LED_BLUE);
 
-    // /* Reset SUBACK status for each topic filter after completion of
-    //  * subscription request cycle. */
-    // for (ulTopicCount = 0; ulTopicCount < mqtttaskTOPIC_COUNT; ulTopicCount++)
-    // {
-    //   xTopicFilterContext[ulTopicCount].xSubAckStatus = MQTTSubAckFailure;
-    // }
+    /* Reset SUBACK status for each topic filter after completion of
+     * subscription request cycle. */
+    for (ulTopicCount = 0; ulTopicCount < mqtttaskTOPIC_COUNT; ulTopicCount++)
+    {
+      xTopicFilterContext[ulTopicCount].xSubAckStatus = MQTTSubAckFailure;
+    }
 
-    // /* Wait for some time between two iterations to ensure that we do not
-    //  * bombard the MQTT broker. */
-    // LogInfo(("prvMQTTDemoTask() completed an iteration successfully. "
-    //          "Total free heap is %u.",
-    //          xPortGetFreeHeapSize()));
-    // LogInfo(("Demo completed successfully."));
-    // LogInfo(("Short delay before starting the next iteration.... "));
+    /* Wait for some time between two iterations to ensure that we do not
+     * bombard the MQTT broker. */
+    LogInfo(("prvMQTTDemoTask() completed an iteration successfully. "
+             "Total free heap is %u.",
+             xPortGetFreeHeapSize()));
     vTaskDelay(mqtttaskDELAY_BETWEEN_DEMO_ITERATIONS);
   }
 }

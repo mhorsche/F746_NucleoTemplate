@@ -49,13 +49,13 @@ extern "C"
 /* Define the byte order of the target MCU (the MCU FreeRTOS+TCP is executing
  * on).  Valid options are pdFREERTOS_BIG_ENDIAN and pdFREERTOS_LITTLE_ENDIAN. */
 #define ipconfigBYTE_ORDER pdFREERTOS_LITTLE_ENDIAN
-#define ipconfigUSE_RMII 1
+#define ipconfigUSE_RMII (1)
 
 /* If the network card/driver includes checksum offloading (IP/TCP/UDP checksums)
  * then set ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM to 1 to prevent the software
  * stack repeating the checksum calculations. */
-#define ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM 1
-#define ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM 1
+#define ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM (1)
+#define ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM (1)
 
 /* Several API's will block until the result is known, or the action has been
  * performed, for example FreeRTOS_send() and FreeRTOS_recv().  The timeouts can be
@@ -66,6 +66,24 @@ extern "C"
 
 #define ipconfigZERO_COPY_RX_DRIVER (1)
 #define ipconfigZERO_COPY_TX_DRIVER (1)
+
+/* Expert option: define a value for 'ipBUFFER_PADDING'.
+ * When the application requests a network buffer, the size of the network buffer
+ * is specified by the application writer, but the size of the network buffer
+ * actually obtained is increased by ipconfigBUFFER_PADDING bytes. The first
+ * ipconfigBUFFER_PADDING bytes of the buffer is then used to hold metadata about
+ * the buffer, and the area that actually stores the data follows the metadata.
+ * This mechanism is transparent to the user as the user only see a pointer to the
+ * area within the buffer actually used to hold network data.
+ * When 'ipconfigBUFFER_PADDING' equals 0, 'ipBUFFER_PADDING' will get a default
+ * value of 8 + 2 bytes. */
+#define ipconfigBUFFER_PADDING (4)
+
+/* Advanced users only.
+ * When ipconfigUSE_LINKED_RX_MESSAGES is set to 1 it is possible to reduce CPU load
+ * during periods of heavy network traffic by linking multiple received packets together,
+ * then passing all the linked packets to the IP RTOS task in one go. */
+#define ipconfigUSE_LINKED_RX_MESSAGES (1)
 
 /* Include support for LLMNR: Link-local Multicast Name Resolution
  * (non-Microsoft) */
@@ -80,11 +98,10 @@ extern "C"
  * socket has been destroyed, the result will be stored into the cache.  The next
  * call to FreeRTOS_gethostbyname() will return immediately, without even creating
  * a socket. */
-#define ipconfigUSE_DNS_CACHE (1)
+#define ipconfigUSE_DNS_CACHE (0)
 #define ipconfigDNS_CACHE_NAME_LENGTH (16)
 #define ipconfigDNS_CACHE_ENTRIES (4)
 #define ipconfigDNS_REQUEST_ATTEMPTS (4)
-#define ipconfigDNS_CACHE_ADDRESSES_PER_ENTRY (4)
 
 /* The IP stack executes it its own task (although any application task can make
  * use of its services through the published sockets API). ipconfigUDP_TASK_PRIORITY
@@ -96,9 +113,6 @@ extern "C"
  * the priority assigned to the task executing the IP stack relative to the
  * priority assigned to tasks that use the IP stack. */
 #define ipconfigIP_TASK_PRIORITY (configMAX_PRIORITIES - 2)
-#define ipconfigEMAC_HANDLER_TASK_PRIORITY (configMAX_PRIORITIES - 1)
-#define ipconfigIPERF_PRIORITY_IPERF_TASK 6
-#define ipconfigMQTT_PRIORITY_MQTT_TASK 7
 
 /* The size, in words (not bytes), of the stack allocated to the FreeRTOS+TCP
  * task.  This setting is less important when the FreeRTOS Win32 simulator is used
@@ -125,7 +139,7 @@ extern "C"
  * is not set to 1 then the network event hook will never be called.  See
  * http://www.FreeRTOS.org/FreeRTOS-Plus/FreeRTOS_Plus_UDP/API/vApplicationIPNetworkEventHook.shtml
  */
-#define ipconfigUSE_NETWORK_EVENT_HOOK 1
+#define ipconfigUSE_NETWORK_EVENT_HOOK (1)
 
 /* Sockets have a send block time attribute.  If FreeRTOS_sendto() is called but
  * a network buffer cannot be obtained then the calling task is held in the Blocked
@@ -148,9 +162,9 @@ extern "C"
  * set to 1 if a valid configuration cannot be obtained from a DHCP server for any
  * reason.  The static configuration used is that passed into the stack by the
  * FreeRTOS_IPInit() function call. */
-#define ipconfigUSE_DHCP 1
-#define ipconfigDHCP_REGISTER_HOSTNAME 1
-#define ipconfigDHCP_USES_UNICAST 1
+#define ipconfigUSE_DHCP (0)
+#define ipconfigDHCP_REGISTER_HOSTNAME (1)
+#define ipconfigDHCP_USES_UNICAST (1)
 
 /* When ipconfigUSE_DHCP is set to 1, DHCP requests will be sent out at
  * increasing time intervals until either a reply is received from a DHCP server
@@ -170,7 +184,7 @@ extern "C"
  * cache then the UDP message is replaced by a ARP message that solicits the
  * required MAC address information.  ipconfigARP_CACHE_ENTRIES defines the maximum
  * number of entries that can exist in the ARP table at any one time. */
-#define ipconfigARP_CACHE_ENTRIES 6
+#define ipconfigARP_CACHE_ENTRIES (6)
 
 /* ARP requests that do not result in an ARP response will be re-transmitted a
  * maximum of ipconfigMAX_ARP_RETRANSMISSIONS times before the ARP request is
@@ -182,7 +196,7 @@ extern "C"
  * New ARP requests are sent for ARP cache entries that are nearing their maximum
  * age.  ipconfigMAX_ARP_AGE is specified in tens of seconds, so a value of 150 is
  * equal to 1500 seconds (or 25 minutes). */
-#define ipconfigMAX_ARP_AGE 150
+#define ipconfigMAX_ARP_AGE (150)
 
 /* Implementing FreeRTOS_inet_addr() necessitates the use of string handling
  * routines, which are relatively large.  To save code space the full
@@ -222,11 +236,11 @@ extern "C"
  * ipconfigALLOW_SOCKET_SEND_WITHOUT_BIND is set to 0 then calling FreeRTOS_sendto()
  * on a socket that has not yet been bound will result in the send operation being
  * aborted. */
-#define ipconfigALLOW_SOCKET_SEND_WITHOUT_BIND 1
+#define ipconfigALLOW_SOCKET_SEND_WITHOUT_BIND (1)
 
 /* Defines the Time To Live (TTL) values used in outgoing UDP packets. */
-#define ipconfigUDP_TIME_TO_LIVE 128
-#define ipconfigTCP_TIME_TO_LIVE 128 /* also defined in FreeRTOSIPConfigDefaults.h */
+#define ipconfigUDP_TIME_TO_LIVE (128)
+#define ipconfigTCP_TIME_TO_LIVE (128) /* also defined in FreeRTOSIPConfigDefaults.h */
 
 /* USE_TCP: Use TCP and all its features */
 #define ipconfigUSE_TCP (1)
@@ -235,7 +249,7 @@ extern "C"
 #define ipconfigSOCKET_HAS_USER_WAKE_CALLBACK_WITH_CONTEXT (1)
 
 /* USE_WIN: Let TCP use windowing mechanism. */
-#define ipconfigUSE_TCP_WIN (1)
+#define ipconfigUSE_TCP_WIN (0)
 
 /* The MTU is the maximum number of bytes the payload of a network frame can
  * contain.  For normal Ethernet V2 frames the maximum MTU is 1500.  Setting a
@@ -246,24 +260,24 @@ extern "C"
 
 /* Set ipconfigUSE_DNS to 1 to include a basic DNS client/resolver.  DNS is used
  * through the FreeRTOS_gethostbyname() API function. */
-#define ipconfigUSE_DNS 1
+#define ipconfigUSE_DNS (1)
 
 /* If ipconfigREPLY_TO_INCOMING_PINGS is set to 1 then the IP stack will
  * generate replies to incoming ICMP echo (ping) requests. */
-#define ipconfigREPLY_TO_INCOMING_PINGS 1
+#define ipconfigREPLY_TO_INCOMING_PINGS (1)
 
 /* If ipconfigSUPPORT_OUTGOING_PINGS is set to 1 then the
  * FreeRTOS_SendPingRequest() API function is available. */
-#define ipconfigSUPPORT_OUTGOING_PINGS 1
+#define ipconfigSUPPORT_OUTGOING_PINGS (1)
 
 /* If ipconfigSUPPORT_SELECT_FUNCTION is set to 1 then the FreeRTOS_select()
  * (and associated) API function is available. */
-#define ipconfigSUPPORT_SELECT_FUNCTION 1
+#define ipconfigSUPPORT_SELECT_FUNCTION (1)
 
 /* If ipconfigFILTER_OUT_NON_ETHERNET_II_FRAMES is set to 1 then Ethernet frames
  * that are not in Ethernet II format will be dropped.  This option is included for
  * potential future IP stack developments. */
-#define ipconfigFILTER_OUT_NON_ETHERNET_II_FRAMES 1
+#define ipconfigFILTER_OUT_NON_ETHERNET_II_FRAMES (1)
 
 /* If ipconfigETHERNET_DRIVER_FILTERS_FRAME_TYPES is set to 1 then it is the
  * responsibility of the Ethernet interface to filter out packets that are of no
@@ -273,7 +287,7 @@ extern "C"
  * because the packet will already have been passed into the stack).  If the
  * Ethernet driver does all the necessary filtering in hardware then software
  * filtering can be removed by using a value other than 1 or 0. */
-#define ipconfigETHERNET_DRIVER_FILTERS_FRAME_TYPES 1
+#define ipconfigETHERNET_DRIVER_FILTERS_FRAME_TYPES (1)
 
 /* The windows simulator cannot really simulate MAC interrupts, and needs to
  * block occasionally to allow other tasks to run. */
@@ -283,13 +297,13 @@ extern "C"
  * 32-bit memory instructions, all packets will be stored 32-bit-aligned, plus 16-bits.
  * This has to do with the contents of the IP-packets: all 32-bit fields are
  * 32-bit-aligned, plus 16-bit(!) */
-#define ipconfigPACKET_FILLER_SIZE 2
+#define ipconfigPACKET_FILLER_SIZE (2)
 
 /* Define the size of the pool of TCP window descriptors.  On the average, each
  * TCP socket will use up to 2 x 6 descriptors, meaning that it can have 2 x 6
  * outstanding packets (for Rx and Tx).  When using up to 10 TP sockets
  * simultaneously, one could define TCP_WIN_SEG_COUNT as 120. */
-#define ipconfigTCP_WIN_SEG_COUNT 64
+#define ipconfigTCP_WIN_SEG_COUNT (64)
 
 /* Each TCP socket has a circular buffers for Rx and Tx, which have a fixed
  * maximum size.  Define the size of Rx buffer for TCP sockets. */
@@ -361,7 +375,7 @@ UDP logging facility is used. */
 #define ipconfigECHO_SERVER_ADDR1 168
 #define ipconfigECHO_SERVER_ADDR2 178
 #define ipconfigECHO_SERVER_ADDR3 16
-#define ipconfigTCP_ECHO_CLIENT_PORT 7
+#define ipconfigTCP_ECHO_CLIENT_PORT (7)
 
 /* The UDP port to which print messages are sent. */
 #define ipconfigPRINT_PORT (15000)
@@ -416,6 +430,52 @@ UDP logging facility is used. */
   // #define ipconfigUSE_CALLBACKS 1
 
   // #define ipconfigCHECK_IP_QUEUE_SPACE 1
+
+  /* iPerf v3.0 Defines --------------------------------------------------------*/
+
+/**
+ * @brief The priority of prvIPerfTask(). Should be lower than the
+ * IP-task and the task running in NetworkInterface.c.
+ */
+#define ipconfigIPERF_PRIORITY_IPERF_TASK (ipconfigIP_TASK_PRIORITY - 2)
+
+/* coreMQTT Defines ----------------------------------------------------------*/
+
+/**
+ * @brief The MQTT client identifier used in this example.  Each client identifier
+ * must be unique so edit as required to ensure no two clients connecting to the
+ * same broker use the same client identifier.
+ *
+ * @note Appending __TIME__ to the client id string will reduce the possibility of a
+ * client id collision in the broker. Note that the appended time is the compilation
+ * time. This client id can cause collision, if more than one instance of the same
+ * binary is used at the same time to connect to the broker.
+ */
+#define ipconfigCLIENT_IDENTIFIER "testClient"__TIME__
+
+/**
+ * @brief Stack size needed for prvMQTTDemoTask(), a bit of a guess.
+ */
+#define ipconfigMQTT_STACK_SIZE_MQTT_TASK (configMINIMAL_STACK_SIZE * 10)
+
+/**
+ * @brief The priority of prvMQTTDemoTask(). Should be lower than the
+ * IP-task and the task running in NetworkInterface.c.
+ */
+#define ipconfigMQTT_PRIORITY_MQTT_TASK (ipconfigIP_TASK_PRIORITY - 3)
+
+/**
+ * @brief MQTT broker end point to connect to.
+ *
+ * @note If you would like to setup an MQTT broker for running this demo,
+ * please see `mqtt_broker_setup.txt`.
+ */
+#define ipconfigMQTT_BROKER_ENDPOINT "192.168.178.16"
+
+/**
+ * @brief The port to use for the demo.
+ */
+#define ipconfigMQTT_BROKER_PORT (1883)
 
 #ifdef __cplusplus
 } /* extern "C" */

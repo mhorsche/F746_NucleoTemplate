@@ -83,7 +83,7 @@
 #ifndef ipconfigIPERF_RECV_BUFFER_SIZE
 /* Only used when ipconfigIPERF_USE_ZERO_COPY = 0.
 	Buffer size when reading from the sockets. */
-#define ipconfigIPERF_RECV_BUFFER_SIZE (2 * ipconfigTCP_MSS)
+#define ipconfigIPERF_RECV_BUFFER_SIZE (8 * ipconfigTCP_MSS)
 #endif
 
 #ifndef ipconfigIPERF_LOOP_BLOCKING_TIME_MS
@@ -111,10 +111,16 @@
 #endif
 
 #ifndef ipconfigIPERF_TX_BUFSIZE
-#define ipconfigIPERF_TX_BUFSIZE (8 * ipconfigTCP_MSS) /* Units of bytes. */
-#define ipconfigIPERF_TX_WINSIZE (6)                   /* Size in units of MSS */
+#define ipconfigIPERF_TX_BUFSIZE (4 * ipconfigTCP_MSS) /* Units of bytes. */
+#endif
+#ifndef ipconfigIPERF_TX_WINSIZE
+#define ipconfigIPERF_TX_WINSIZE (2) /* Size in units of MSS */
+#endif
+#ifndef ipconfigIPERF_RX_BUFSIZE
 #define ipconfigIPERF_RX_BUFSIZE (8 * ipconfigTCP_MSS) /* Units of bytes. */
-#define ipconfigIPERF_RX_WINSIZE (6)                   /* Size in units of MSS */
+#endif
+#ifndef ipconfigIPERF_RX_WINSIZE
+#define ipconfigIPERF_RX_WINSIZE (4) /* Size in units of MSS */
 #endif
 
 #ifndef ARRAY_SIZE

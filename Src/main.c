@@ -45,7 +45,28 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static UBaseType_t ulNextRand;
-RNG_HandleTypeDef hrng;
+RNG_HandleTypeDef xRNG;
+
+osThreadId_t xLedTaskHandle;
+const osThreadAttr_t xLedTaskAttributes =
+    {
+        .name = "led",
+        .stack_size = (configMINIMAL_STACK_SIZE * 7), /* Need ~500 byte due to printf (logging) */
+        .priority = (osPriority_t)osPriorityBelowNormal1,
+};
+
+/* The MAC address array is not declared const as the MAC address will
+normally be read from an EEPROM and not hard coded (in real deployed
+applications).*/
+static uint8_t ucMACAddress[6] = {ipconfigMAC_ADDR0, ipconfigMAC_ADDR1, ipconfigMAC_ADDR2, ipconfigMAC_ADDR3, ipconfigMAC_ADDR4, ipconfigMAC_ADDR5};
+
+/* Define the network addressing.  These parameters will be used if either
+ * ipconfigUDE_DHCP is 0 or if ipconfigUSE_DHCP is 1 but DHCP auto configuration
+ * failed. */
+static const uint8_t ucIPAddress[4] = {ipconfigIP_ADDR0, ipconfigIP_ADDR1, ipconfigIP_ADDR2, ipconfigIP_ADDR3};
+static const uint8_t ucNetMask[4] = {ipconfigNET_MASK0, ipconfigNET_MASK1, ipconfigNET_MASK2, ipconfigNET_MASK3};
+static const uint8_t ucGatewayAddress[4] = {ipconfigGATEWAY_ADDR0, ipconfigGATEWAY_ADDR1, ipconfigGATEWAY_ADDR2, ipconfigGATEWAY_ADDR3};
+static const uint8_t ucDNSServerAddress[4] = {ipconfigDNS_SERVER_ADDR0, ipconfigDNS_SERVER_ADDR1, ipconfigDNS_SERVER_ADDR2, ipconfigDNS_SERVER_ADDR3};
 
 /* Set the following constant to pdTRUE to log using the method indicated by the
  * name of the constant, or pdFALSE to not log using the method indicated by the
@@ -56,35 +77,9 @@ RNG_HandleTypeDef hrng;
  * the port number set by configPRINT_PORT in FreeRTOSConfig.h. */
 const BaseType_t xLogToUART = pdTRUE, xLogToSWO = pdFALSE, xLogToUDP = pdTRUE;
 
-osThreadId_t tid_led;
-const osThreadAttr_t LedTask_attributes =
-    {
-        .name = "led",
-        .stack_size = configMINIMAL_STACK_SIZE * 5, /* Need ~500 byte due to printf (logging) */
-        .priority = (osPriority_t)osPriorityBelowNormal1,
-};
-
-/* The MAC address array is not declared const as the MAC address will
-normally be read from an EEPROM and not hard coded (in real deployed
-applications).*/
-static uint8_t ucMACAddress[6] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
-// static uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5};
-
-/* Define the network addressing.  These parameters will be used if either
- * ipconfigUDE_DHCP is 0 or if ipconfigUSE_DHCP is 1 but DHCP auto configuration
- * failed. */
-static const uint8_t ucIPAddress[4] = {192, 168, 178, 201};
-// static const uint8_t ucIPAddress[4] = {ipconfigIP_ADDR0, ipconfigIP_ADDR1, ipconfigIP_ADDR2, ipconfigIP_ADDR3};
-static const uint8_t ucNetMask[4] = {255, 255, 255, 0};
-// static const uint8_t ucNetMask[4] = {ipconfigNET_MASK0, ipconfigNET_MASK1, ipconfigNET_MASK2, ipconfigNET_MASK3};
-static const uint8_t ucGatewayAddress[4] = {192, 168, 178, 1};
-// static const uint8_t ucGatewayAddress[4] = {ipconfigGATEWAY_ADDR0, ipconfigGATEWAY_ADDR1, ipconfigGATEWAY_ADDR2, ipconfigGATEWAY_ADDR3};
-static const uint8_t ucDNSServerAddress[4] = {208, 67, 222, 222};
-// static const uint8_t ucDNSServerAddress[4] = {ipconfigDNS_SERVER_ADDR0, ipconfigDNS_SERVER_ADDR1, ipconfigDNS_SERVER_ADDR2, ipconfigDNS_SERVER_ADDR3};
-
 /* Private function prototypes -----------------------------------------------*/
-extern void vStartHighResolutionTimer(void);     /* @see freertos.c */
-extern void vShowTaskTable(BaseType_t aDoClear); /* @see freertos.c */
+extern void vShowTaskTable(BaseType_t xDoClear); /* @see freertos.c */
+extern void vHeapInit(void);                     /* @see freertos.c */
 
 static void prvLedTask(void *pvParameters);
 
@@ -100,11 +95,11 @@ static void DebugMode_Config(void);
  */
 int main(void)
 {
-  /* Enable I-Cache */
-  SCB_EnableICache();
+  // /* Enable I-Cache */
+  // SCB_EnableICache();
 
-  /* Enable D-Cache */
-  SCB_EnableDCache();
+  // /* Enable D-Cache */
+  // SCB_EnableDCache();
 
   /* STM32F7xx HAL library initialization:
    *   - Configure the Flash ART accelerator
@@ -117,7 +112,7 @@ int main(void)
    *   - Low Level Initialization
    */
   HAL_Init();
-  NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4); //https://www.freertos.org/RTOS-Cortex-M3-M4.html
+  NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4); // https://www.freertos.org/RTOS-Cortex-M3-M4.html
 
   /* Configure the system clock to 216 MHz */
   SystemClock_Config();
@@ -133,23 +128,26 @@ int main(void)
   BSP_LED_Init(LED_GREEN);
   BSP_LED_Init(LED_BLUE);
 
+  vHeapInit();
+
   /* Initialize logging for libraries that depend on it. */
   uint32_t ulLoggingIPAddress = 0;
   ulLoggingIPAddress = FreeRTOS_inet_addr_quick(ipconfigECHO_SERVER_ADDR0, ipconfigECHO_SERVER_ADDR1, ipconfigECHO_SERVER_ADDR2, ipconfigECHO_SERVER_ADDR3);
   vLoggingInit(xLogToUART, xLogToSWO, xLogToUDP, ulLoggingIPAddress, ipconfigPRINT_PORT);
+  FreeRTOS_printf(("\r\n\r\n\r\n"));
 
   /* Initialise the RTOS's TCP/IP stack.  The tasks that use the network
    * are created in the vApplicationIPNetworkEventHook() hook function
    * below.  The hook function is called when the network connects. */
-  hrng.Instance = RNG;
-  if (HAL_RNG_Init(&hrng) != HAL_OK)
+  xRNG.Instance = RNG;
+  if (HAL_RNG_Init(&xRNG) != HAL_OK)
   {
     Error_Handler();
   }
   FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
 
   /* Definition and creation of FreeRTOS Threads (Tasks) */
-  tid_led = osThreadNew(prvLedTask, NULL, &LedTask_attributes);
+  xLedTaskHandle = osThreadNew(prvLedTask, NULL, &xLedTaskAttributes);
 
   /* Init and start scheduler */
   osKernelInitialize(); /* Call init function for freertos objects (in freertos.c) */
@@ -161,6 +159,7 @@ int main(void)
   {
   };
 }
+/*-----------------------------------------------------------*/
 
 /**
  * @brief  Use by the pseudo random number generator.
@@ -174,9 +173,9 @@ UBaseType_t uxRand(void)
   ulNextRand = (ulMultiplier * ulNextRand) + ulIncrement;
   return ((int)(ulNextRand >> 16UL) & 0x7fffUL);
 }
+/*-----------------------------------------------------------*/
 
-static void
-prvLedTask(void *pvParameters)
+static void prvLedTask(void *pvParameters)
 {
   uint32_t cnt = 0;
 
@@ -185,7 +184,7 @@ prvLedTask(void *pvParameters)
     /* Show task manager every 10 iterations */
     if (cnt++ % 10 == 9)
     {
-      // vShowTaskTable(pdFALSE);
+      vShowTaskTable(pdFALSE);
     }
 
     /* Toggle blue LED and write command via SWO/SWV */
@@ -193,6 +192,7 @@ prvLedTask(void *pvParameters)
     osDelay(1000);
   }
 }
+/*-----------------------------------------------------------*/
 
 /**
  * @brief  This function is executed in case of error occurrence.
@@ -201,7 +201,9 @@ prvLedTask(void *pvParameters)
  */
 void Error_Handler(void)
 {
-  /* Turn N/A on */
+  /* Turn on/off LEDs to indicate error handler */
+  BSP_LED_Off(LED_GREEN);
+  BSP_LED_Off(LED_BLUE);
   BSP_LED_On(LED_RED);
 
   /* User can add his own implementation to report the HAL error return state */
@@ -210,6 +212,7 @@ void Error_Handler(void)
   {
   };
 }
+/*-----------------------------------------------------------*/
 
 /**
  * @brief  System Clock Configuration
@@ -285,6 +288,7 @@ static void SystemClock_Config(void)
   //     Error_Handler ();
   //   }
 }
+/*-----------------------------------------------------------*/
 
 /**
  * @brief  Configure Debug Mode to stop all timers.
@@ -317,6 +321,7 @@ static void DebugMode_Config(void)
   __HAL_DBGMCU_FREEZE_TIM13();
   __HAL_DBGMCU_FREEZE_TIM14();
 }
+/*-----------------------------------------------------------*/
 
 #ifdef USE_FULL_ASSERT
 /**
@@ -336,6 +341,7 @@ void assert_failed(uint8_t *file, uint32_t line)
   {
   }
 }
+/*-----------------------------------------------------------*/
 #endif
 
 /**

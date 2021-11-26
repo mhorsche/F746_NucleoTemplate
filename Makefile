@@ -81,13 +81,14 @@ Middlewares/Third_Party/FreeRTOS/Source/queue.c \
 Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
 Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
 Middlewares/Third_Party/FreeRTOS/Source/timers.c \
-Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
+Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_5.c \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/port.c \
 Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c 
 
 # FreeRTOS+Utilities sources
 C_SOURCES +=  \
-Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/logging.c 
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/logging.c \
+Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/printf.c 
 # Middlewares/Third_Party/FreeRTOS-Plus/Source/Utilities/logging/printf_stdarg.c 
 
 # FreeRTOS+TCP sources

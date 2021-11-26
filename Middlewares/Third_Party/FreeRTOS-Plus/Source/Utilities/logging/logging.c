@@ -16,7 +16,8 @@
 #include "cmsis_os.h"
 
 /* Standard includes. */
-#include <stdio.h>
+// #include <stdio.h> /* use printf.c for embedded systems https://github.com/mpaland/printf */
+#include "printf.h"
 #include <string.h>
 #include <stdint.h>
 #include <stdarg.h>
@@ -25,7 +26,7 @@
 /* FreeRTOS includes. */
 #include <FreeRTOS.h>
 #include "task.h"
-#include "stream_buffer.h"
+#include "message_buffer.h"
 
 /* FreeRTOS+TCP includes. */
 #include <FreeRTOS_IP.h>
@@ -36,51 +37,48 @@
 #include "logging_levels.h"
 
 /* Private define ------------------------------------------------------------*/
-/* Dimensions the arrays into which print messages are created. */
-// #define dlMAX_PRINT_STRING_LENGTH 255
-
-/* The size of the stream buffer used to pass messages from FreeRTOS tasks to
- * the thread that is responsible for making any calls that are necessary for the 
- * selected logging method. */
-#define dSTREAM_BUFFER_LENGTH_BYTES ((size_t)128)
-// #define dSTREAM_BUFFER_TRIGGER_LEVEL_10 ((BaseType_t)10)
-#define LOG_MESSAGE_COUNT 32
+/* Used to dimension the array used to hold the messages.  The available space
+ * will actually be one less than this, so 999. */
+#define loggingSTORAGE_SIZE_BYTES (1024)
+#define loggingMAX_MESSAGE_SIZE (128)
 
 /* A block time of zero simply means don't block. */
 #define dlDONT_BLOCK 0
 
-/* Message object structure */
-typedef struct
-{
-  size_t len;
-  char str[dSTREAM_BUFFER_LENGTH_BYTES];
-} msgqueue_obj_t;
-
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart; /* global UART (ST-Link VCOM) handler */
 
-osMessageQueueId_t mid_MsgQueue = NULL;
+/* Global message buffers handle */
+MessageBufferHandle_t xMessageBuffer;
 
-osThreadId_t tid_logger;
-const osThreadAttr_t LoggerTask_attributes =
-    {
-        .name = "logger",
-        .stack_size = configMINIMAL_STACK_SIZE * 5,
-        .priority = (osPriority_t)osPriorityLow,
-};
+/* The variable used to hold the message buffer structure. */
+StaticMessageBuffer_t xMessageBufferStruct;
+
+/* Defines the memory that will actually hold the messages within the message
+ * buffer.  Should be one more than the value passed in the xBufferSizeBytes
+ * parameter. */
+static uint8_t ucStorageBuffer[loggingSTORAGE_SIZE_BYTES];
+
+/* Counter for successfully submitted and dropped messages */
+static uint32_t ulDropCount;
+static uint32_t ulUDPTxSuccessCount;
+static uint32_t ulUDPTxErrorCount;
 
 /* Stores the selected logging targets passed in as parameters to the
  * vLoggingInit() function. */
-BaseType_t xUARTLoggingUsed = pdTRUE,
-           xSWOLoggingUsed = pdFALSE,
-           xUDPLoggingUsed = pdFALSE;
-
-/* The stream buffer that is used to send data from an interrupt to the task. */
-// static StreamBufferHandle_t xStreamBuffer = NULL;
+BaseType_t xUARTLoggingUsed = pdTRUE, xSWOLoggingUsed = pdFALSE, xUDPLoggingUsed = pdFALSE;
 
 /* The UDP socket and address on/to which print messages are sent. */
 Socket_t xPrintSocket = FREERTOS_INVALID_SOCKET;
 struct freertos_sockaddr xPrintUDPAddress;
+
+osThreadId_t xLoggerTaskHandle;
+const osThreadAttr_t xLoggerTaskAttributes =
+    {
+        .name = "logger",
+        .stack_size = (configMINIMAL_STACK_SIZE * 5),
+        .priority = (osPriority_t)osPriorityLow,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /*
@@ -121,13 +119,12 @@ void vLoggingInit(BaseType_t xLogToUART,
     /* If UART logging is used then initialise peripheral. */
     if (xUARTLoggingUsed != pdFALSE)
     {
-      /* Put the USART peripheral in the Asynchronous mode (UART Mode) */
-      /* UART configured as follows:
-      - Word Length = 8 Bits
-      - Stop Bit    = One Stop bit
-      - Parity      = None
-      - BaudRate    = 115200 baud
-      - Hardware flow control disabled (RTS and CTS signals) */
+      /* Put the USART peripheral in the Asynchronous mode (UART Mode):
+       * - Word Length = 8 Bits
+       * - Stop Bit    = One Stop bit
+       * - Parity      = None
+       * - BaudRate    = 115200 baud
+       * - Hardware flow control disabled (RTS and CTS signals) */
       huart.Instance = STLK_USART;
       huart.Init.BaudRate = 115200;
       huart.Init.WordLength = UART_WORDLENGTH_8B;
@@ -138,11 +135,16 @@ void vLoggingInit(BaseType_t xLogToUART,
       huart.Init.OverSampling = UART_OVERSAMPLING_16;
       huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
       huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-
       if (HAL_UART_Init(&huart) != HAL_OK)
       {
         Error_Handler();
       }
+    }
+
+    /* If SWO logging is used then initialise peripheral. */
+    if (xSWOLoggingUsed != pdFALSE)
+    {
+      /* Noting to initialise here. */
     }
 
     /* If UDP logging is used then store the address to which the log data
@@ -155,48 +157,25 @@ void vLoggingInit(BaseType_t xLogToUART,
       xPrintUDPAddress.sin_addr = ulRemoteIPAddress;
     }
 
-    /* If a disk file or stdout are to be used then Win32 system calls will
-     * have to be made.  Such system calls cannot be made from FreeRTOS tasks
-     * so create a stream buffer to pass the messages to a Win32 thread, then
-     * create the thread itself, along with a Win32 event that can be used to
-     * unblock the thread. */
-    if ((xUARTLoggingUsed != pdFALSE) || (xSWOLoggingUsed != pdFALSE))
+    /* As neither the pucMessageBufferStorageArea or pxStaticMessageBuffer
+     * parameters were NULL, xMessageBuffer will not be NULL, and can be used to
+     * reference the created message buffer in other message buffer API calls. */
+    xMessageBuffer = xMessageBufferCreateStatic(sizeof(ucStorageBuffer),
+                                                ucStorageBuffer,
+                                                &xMessageBufferStruct);
+    if (xMessageBuffer == NULL)
     {
-      /* Create the message queue */
-      mid_MsgQueue = osMessageQueueNew(LOG_MESSAGE_COUNT, sizeof(msgqueue_obj_t), NULL);
-      if (mid_MsgQueue == NULL)
-      {
-        /* Message Queue object not created, handle failure */
-        Error_Handler();
-      }
-
-      /* Create the stream buffer that sends data from the interrupt to the
-       * task, and create the task. */
-      // xStreamBuffer = xStreamBufferCreate(/* The buffer length in bytes. */
-      //                                     dSTREAM_BUFFER_LENGTH_BYTES,
-      //                                     /* The stream buffer's trigger level. */
-      //                                     dSTREAM_BUFFER_TRIGGER_LEVEL_10);
-
-      //   /* Create the buffer. */
-      //   xLogStreamBuffer = (StreamBuffer_t *)malloc(
-      //       sizeof(*xLogStreamBuffer) -
-      //       sizeof(xLogStreamBuffer->ucArray) +
-      //       dlLOGGING_STREAM_BUFFER_SIZE + 1);
-      //   configASSERT(xLogStreamBuffer);
-      //   memset(
-      //       xLogStreamBuffer,
-      //       '\0',
-      //       sizeof(*xLogStreamBuffer) - sizeof(xLogStreamBuffer->ucArray));
-      //   xLogStreamBuffer->LENGTH = dlLOGGING_STREAM_BUFFER_SIZE + 1;
-
-      /* Create the logging thread */
-      tid_logger = osThreadNew(prvLoggingThread, NULL, &LoggerTask_attributes);
+      /* Message Queue object not created, handle failure */
+      Error_Handler();
     }
+
+    /* Create the logging thread */
+    xLoggerTaskHandle = osThreadNew(prvLoggingThread, NULL, &xLoggerTaskAttributes);
   }
 #else  /* if ( ( ipconfigHAS_DEBUG_PRINTF == 1 ) || ( ipconfigHAS_PRINTF == 1 ) ) */
   {
     /* FreeRTOSIPConfig is set such that no print messages will be output.
-             * Avoid compiler warnings about unused parameters. */
+     * Avoid compiler warnings about unused parameters. */
     (void)xLogToUART;
     (void)xLogToSWO;
     (void)xLogToUDP;
@@ -215,7 +194,6 @@ void vLoggingPrintf(const char *pcFormat, ...)
   prvLoggingPrintf(pcFormat, xArgs);
   va_end(xArgs);
 }
-
 /*-----------------------------------------------------------*/
 
 static void prvCreatePrintSocket(void *pvParameter1, uint32_t ulParameter2)
@@ -224,7 +202,7 @@ static void prvCreatePrintSocket(void *pvParameter1, uint32_t ulParameter2)
   Socket_t xSocket;
 
   /* The function prototype is that of a deferred function, but the parameters
-     * are not actually used. */
+   * are not actually used. */
   (void)pvParameter1;
   (void)ulParameter2;
 
@@ -244,60 +222,67 @@ static void prvCreatePrintSocket(void *pvParameter1, uint32_t ulParameter2)
 
 static void prvLoggingPrintf(const char *pcFormat, va_list xArgs)
 {
-  osStatus_t status;
-  msgqueue_obj_t msg;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE; /* Initialised to pdFALSE. */
+  char ucTxBuffer[loggingMAX_MESSAGE_SIZE];
 
-  // memset((uint8_t *)msg.str, 0x00, sizeof(msg.str));
-  size_t len = vsnprintf(msg.str, sizeof(msg.str), pcFormat, xArgs);
-  msg.len = len;
+  /* Parse logging message using printf (this function blows) */
+  size_t xTransmitBytes = vsnprintf(ucTxBuffer, sizeof(ucTxBuffer), pcFormat, xArgs);
 
-  /* Append message to message queue */
-  status = osMessageQueuePut(mid_MsgQueue, &msg, 0U, 0U);
-  if (status != osOK)
+  /* Attempt to send the string to the message buffer. */
+  size_t xBytesSent = xMessageBufferSendFromISR(xMessageBuffer, (void *)&ucTxBuffer, xTransmitBytes, &xHigherPriorityTaskWoken);
+  if (xBytesSent != xTransmitBytes)
   {
-    /* osErrorTimeout: the message could not be put into the queue in the given time (wait-timed semantics).
-     * osErrorResource: not enough space in the queue (try semantics).
-     * osErrorParameter: parameter mq_id is NULL or invalid, non-zero timeout specified in an ISR. */
+    /* The string could not be added to the message buffer because there was
+     * not enough free space in the buffer. */
+    ulDropCount++;
   }
 
-  /* Send the string to the stream buffer. */
-  // xStreamBufferSendFromISR(xStreamBuffer,
-  //                          (const void *)(buf),
-  //                          len,
-  //                          NULL);
-
-  return;
+  /* If xHigherPriorityTaskWoken was set to pdTRUE inside
+   * xMessageBufferSendFromISR() then a task that has a priority above the
+   * priority of the currently executing task was unblocked and a context
+   * switch should be performed to ensure the ISR returns to the unblocked
+   * task.  In most FreeRTOS ports this is done by simply passing
+   * xHigherPriorityTaskWoken into taskYIELD_FROM_ISR(), which will test the
+   * variables value, and perform the context switch if necessary.  Check the
+   * documentation for the port in use for port specific instructions. */
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 /*-----------------------------------------------------------*/
 
 static void prvLoggingThread(void *pvParameters)
 {
-  osStatus_t status;
-  msgqueue_obj_t msg;
-  // char buf[dSTREAM_BUFFER_LENGTH_BYTES];
+  char ucRxBuffer[loggingMAX_MESSAGE_SIZE];
+  size_t xReceivedBytes;
+  const TickType_t xBlockTime = pdMS_TO_TICKS(20);
 
   /* Infinite loop */
   for (;;)
   {
-    /* wait for message */
-    status = osMessageQueueGet(mid_MsgQueue, &msg, NULL, 100U);
-    if (status == osOK)
+    /* Receive the next message from the message buffer.  Wait in the Blocked
+     * state (so not using any CPU processing time) for a maximum of 100ms for
+     * a message to become available. */
+    xReceivedBytes = xMessageBufferReceive(xMessageBuffer, (void *)ucRxBuffer, sizeof(ucRxBuffer), xBlockTime);
+
+    if (xReceivedBytes > 0)
     {
+      /* A ucRxBuffer contains a message that is xReceivedBytes long.  Process
+       * the message here... */
+
       /* Enable red LED to indicate data transfer */
       BSP_LED_On(LED_RED);
 
       /* Send message via UART */
       if (xUARTLoggingUsed != pdFALSE)
       {
-        HAL_UART_Transmit(&huart, (uint8_t *)&msg.str, msg.len, 1000);
+        HAL_UART_Transmit(&huart, (uint8_t *)&ucRxBuffer, xReceivedBytes, 100);
       }
 
       /* Send message via SWO */
       if (xSWOLoggingUsed != pdFALSE)
       {
-        for (int DataIdx = 0; DataIdx < msg.len; DataIdx++)
+        for (int DataIdx = 0; DataIdx < xReceivedBytes; DataIdx++)
         {
-          ITM_SendChar(msg.str[DataIdx]);
+          ITM_SendChar(ucRxBuffer[DataIdx]);
         }
       }
 
@@ -310,7 +295,7 @@ static void prvLoggingThread(void *pvParameters)
           /* Create and bind the socket to which print messages are sent.  The
            * xTimerPendFunctionCall() function is used even though this is
            * not an interrupt because this function is called from the IP task
-           * and the	IP task cannot itself wait for a socket to bind.  The
+           * and the IP task cannot itself wait for a socket to bind.  The
            * parameters to prvCreatePrintSocket() are not required so set to
            * NULL or 0. */
           xTimerPendFunctionCall(prvCreatePrintSocket, NULL, 0, dlDONT_BLOCK);
@@ -318,51 +303,72 @@ static void prvLoggingThread(void *pvParameters)
 
         if (xPrintSocket != FREERTOS_INVALID_SOCKET)
         {
-          // uint8_t *pucBuffer;
-          // /* This RTOS task is going to send using the zero copy interface.  The
-          //  * data being sent is therefore written directly into a buffer that is
-          //  * passed into, rather than copied into, the FreeRTOS_sendto()
-          //  * function.
-          //  * First obtain a buffer of adequate length from the TCP/IP stack into which
-          //  * the string will be written. */
-          // pucBuffer = FreeRTOS_GetUDPPayloadBuffer(msg.len, portMAX_DELAY);
+#if (ipconfigZERO_COPY_TX_DRIVER != 0)
+          {
+            uint8_t *pucBuffer;
+            /* This RTOS task is going to send using the zero copy interface.  The
+             * data being sent is therefore written directly into a buffer that is
+             * passed into, rather than copied into, the FreeRTOS_sendto()
+             * function.
+             * First obtain a buffer of adequate length from the TCP/IP stack into which
+             * the string will be written. */
+            pucBuffer = FreeRTOS_GetUDPPayloadBuffer(xReceivedBytes, portMAX_DELAY);
 
-          // /* Check a buffer was obtained. */
-          // if (pucBuffer != 0)
-          // {
-          //   /* Create the string that is sent. */
-          //   memcpy((uint8_t *)pucBuffer, msg.str, msg.len);
-          //   // memset(pucBuffer, 0x00, xStringLength);
-          //   // sprintf(pucBuffer, "%s%lurn", ucStringToSend, ulCount);
+            /* Check a buffer was obtained. */
+            if (pucBuffer != 0)
+            {
+              /* Create the string that is sent. */
+              memcpy((uint8_t *)pucBuffer, ucRxBuffer, xReceivedBytes);
+              // memset(pucBuffer, 0x00, xStringLength);
+              // sprintf(pucBuffer, "%s%lurn", ucStringToSend, ulCount);
 
-          //   /* Pass the buffer into the send function.  ulFlags has the
-          //    * FREERTOS_ZERO_COPY bit set so the TCP/IP stack will take control of the
-          //    * buffer rather than copy data out of the buffer. */
-          //   BaseType_t lReturned = FreeRTOS_sendto(xPrintSocket,
-          //                                          (void *)pucBuffer,
-          //                                          msg.len,
-          //                                          FREERTOS_ZERO_COPY,
-          //                                          &xPrintUDPAddress, sizeof(xPrintUDPAddress));
+              /* Pass the buffer into the send function.  ulFlags has the
+               * FREERTOS_ZERO_COPY bit set so the TCP/IP stack will take control of the
+               * buffer rather than copy data out of the buffer. */
+              BaseType_t lReturned = FreeRTOS_sendto(xPrintSocket, (void *)pucBuffer, xReceivedBytes, FREERTOS_ZERO_COPY, &xPrintUDPAddress, sizeof(xPrintUDPAddress));
+              if (lReturned == 0)
+              {
+                /* The send operation failed. Adjust TxError counter. */
+                ulUDPTxErrorCount++;
 
-          //   if (lReturned == 0)
-          //   {
-          //     /* The send operation failed, so this RTOS task is still responsible
-          //      * for the buffer obtained from the TCP/IP stack.  To ensure the buffer
-          //      * is not lost it must either be used again, or, as in this case,
-          //      * returned to the TCP/IP stack using FreeRTOS_ReleaseUDPPayloadBuffer().
-          //      * pucBuffer can be safely re-used after this call. */
-          //     FreeRTOS_ReleaseUDPPayloadBuffer((void *)pucBuffer);
-          //   }
-          //   else
-          //   {
-          //     /* The send was successful so the TCP/IP stack is now managing the
-          //      * buffer pointed to by pucBuffer, and the TCP/IP stack will
-          //      * return the buffer once it has been sent.  pucBuffer can
-          //      * be safely re-used. */
-          //   }
-          // }
+                /* The send operation failed, so this RTOS task is still responsible
+                 * for the buffer obtained from the TCP/IP stack.  To ensure the buffer
+                 * is not lost it must either be used again, or, as in this case,
+                 * returned to the TCP/IP stack using FreeRTOS_ReleaseUDPPayloadBuffer().
+                 * pucBuffer can be safely re-used after this call. */
+                FreeRTOS_ReleaseUDPPayloadBuffer((void *)pucBuffer);
+              }
+              else
+              {
+                /* Adjust TxSuccess counter */
+                ulUDPTxSuccessCount++;
 
-          FreeRTOS_sendto(xPrintSocket, msg.str, msg.len, 0, &xPrintUDPAddress, sizeof(xPrintUDPAddress));
+                /* The send was successful so the TCP/IP stack is now managing the
+                 * buffer pointed to by pucBuffer, and the TCP/IP stack will
+                 * return the buffer once it has been sent.  pucBuffer can
+                 * be safely re-used. */
+              }
+            }
+          }
+#else
+          {
+            /* Zero copy interface is disabled. Use ipconfigZERO_COPY_TX_DRIVER
+             * to allow zero copy access.
+             * Send the buffer with ulFlags set to 0, so the FREERTOS_ZERO_COPY bit
+             * is clear. */
+            BaseType_t lReturned = FreeRTOS_sendto(xPrintSocket, ucRxBuffer, xReceivedBytes, 0, &xPrintUDPAddress, sizeof(xPrintUDPAddress));
+            if (lReturned != xReceivedBytes)
+            {
+              /* The send operation failed. Adjust TxError counter. */
+              ulUDPTxErrorCount++;
+            }
+            else
+            {
+              /* Adjust TxSuccess counter */
+              ulUDPTxSuccessCount++;
+            }
+          }
+#endif
         }
       }
 

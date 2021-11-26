@@ -99,18 +99,22 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
+
 #if defined(STM32F7xx)
 #include "stm32f7xx_hal.h"
 #define stm_is_F7 1
-#elif defined(STM32F407xx) || defined(STM32F417xx) || defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx)
+#elif defined(STM32F4xx)
 #include "stm32f4xx_hal.h"
 #define stm_is_F4 1
 #elif defined(STM32F2xx)
 #include "stm32f2xx_hal.h"
 #define stm_is_F2 1
-#else
+#elif defined(STM32F1xx)
+#include "stm32f1xx_hal.h"
+#define stm_is_F1 1
+#else /* if defined( STM32F7xx ) */
 #error For what part should this be compiled?
-#endif
+#endif /* if defined( STM32F7xx ) */
 
 #include "stm32fxx_hal_eth.h"
 
@@ -129,7 +133,7 @@
 
 #ifdef HAL_ETH_MODULE_ENABLED
 
-#if (stm_is_F2 != 0 || stm_is_F4 != 0 || stm_is_F7)
+#if (stm_is_F1 != 0 || stm_is_F2 != 0 || stm_is_F4 != 0 || stm_is_F7)
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -137,6 +141,12 @@
 /** @defgroup ETH_Private_Constants ETH Private Constants
  * @{
  */
+/* Some macros have been renamed through time. */
+#ifndef ETH_MACMIIAR_CR_Div16
+#define ETH_MACMIIAR_CR_Div16 ETH_MACMIIAR_CR_DIV16
+#define ETH_MACMIIAR_CR_Div26 ETH_MACMIIAR_CR_DIV26
+#define ETH_MACMIIAR_CR_Div42 ETH_MACMIIAR_CR_DIV42
+#endif
 
 /**
  * @}
@@ -148,8 +158,11 @@
 /** @defgroup ETH_Private_Functions ETH Private Functions
  * @{
  */
-static void ETH_MACDMAConfig(ETH_HandleTypeDef *heth, uint32_t err);
-static void ETH_MACAddressConfig(ETH_HandleTypeDef *heth, uint32_t MacAddr, uint8_t *Addr);
+static void ETH_MACDMAConfig(ETH_HandleTypeDef *heth,
+                             uint32_t err);
+static void ETH_MACAddressConfig(ETH_HandleTypeDef *heth,
+                                 uint32_t MacAddr,
+                                 uint8_t *Addr);
 static void ETH_MACReceptionEnable(ETH_HandleTypeDef *heth);
 static void ETH_MACReceptionDisable(ETH_HandleTypeDef *heth);
 static void ETH_MACTransmissionEnable(ETH_HandleTypeDef *heth);
@@ -243,7 +256,7 @@ HAL_StatusTypeDef HAL_ETH_Init(ETH_HandleTypeDef *heth)
 
     /* Get hclk frequency value (e.g. 168,000,000) */
     hclk = HAL_RCC_GetHCLKFreq();
-
+#if !defined(STM32F2xx)
     /* Set CR bits depending on hclk value */
     if ((hclk >= 20000000uL) && (hclk < 35000000uL))
     {
@@ -255,22 +268,58 @@ HAL_StatusTypeDef HAL_ETH_Init(ETH_HandleTypeDef *heth)
         /* CSR Clock Range between 35-60 MHz */
         tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div26;
     }
-    else if ((hclk >= 60000000uL) && (hclk < 100000000uL))
+    else
+    {
+#if (stm_is_F1 != 0)
+        {
+            /* The STM32F1xx has a frequency up to 72 MHz. */
+            /* CSR Clock Range between 60-72 MHz */
+            tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div42;
+        }
+#else
+        {
+            if ((hclk >= 60000000uL) && (hclk < 100000000uL))
+            {
+                /* CSR Clock Range between 60-100 MHz */
+                tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div42;
+            }
+            else if ((hclk >= 100000000uL) && (hclk < 150000000uL))
+            {
+                /* CSR Clock Range between 100-150 MHz */
+                tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div62;
+            }
+            else /* ( ( hclk >= 150000000uL ) && ( hclk <= 183000000uL ) ) */
+            {
+                /* CSR Clock Range between 150-183 MHz */
+                tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div102;
+            }
+        }
+#endif /* if ( stm_is_F1 != 0 ) */
+    }
+#else  /* if !defined( STM32F2xx ) */
+    /* Clock settings for STM32F2 only. */
+    /* Set CR bits depending on hclk value */
+    if ((hclk >= 20000000U) && (hclk < 35000000U))
+    {
+        /* CSR Clock Range between 20-35 MHz */
+        tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div16;
+    }
+    else if ((hclk >= 35000000U) && (hclk < 60000000U))
+    {
+        /* CSR Clock Range between 35-60 MHz */
+        tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div26;
+    }
+    else if ((hclk >= 60000000U) && (hclk < 100000000U))
     {
         /* CSR Clock Range between 60-100 MHz */
         tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div42;
     }
-    else if ((hclk >= 100000000uL) && (hclk < 150000000uL))
+    else /* ((hclk >= 100000000)&&(hclk < 120000000)) */
     {
-        /* CSR Clock Range between 100-150 MHz */
+        /* CSR Clock Range between 100-120 MHz */
         tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div62;
     }
-    else /* ( ( hclk >= 150000000uL ) && ( hclk <= 183000000uL ) ) */
-    {
-        /* CSR Clock Range between 150-183 MHz */
-        tmpreg |= (uint32_t)ETH_MACMIIAR_CR_Div102;
-    }
-
+#endif /* defined(STM32F2xx) */
     /* Write to ETHERNET MAC MIIAR: Configure the ETHERNET CSR Clock Range */
     heth->Instance->MACMIIAR = (uint32_t)tmpreg;
 
@@ -370,8 +419,6 @@ __weak void HAL_ETH_MspDeInit(ETH_HandleTypeDef *heth)
     (ETH_DMA_IT_TST | ETH_DMA_IT_PMT | ETH_DMA_IT_MMC | ETH_DMA_IT_NIS | ETH_DMA_IT_AIS | ETH_DMA_IT_ER | \
      ETH_DMA_IT_FBE | ETH_DMA_IT_ET | ETH_DMA_IT_RWT | ETH_DMA_IT_RPS | ETH_DMA_IT_RBU | ETH_DMA_IT_R |   \
      ETH_DMA_IT_TU | ETH_DMA_IT_RO | ETH_DMA_IT_TJT | ETH_DMA_IT_TPS | ETH_DMA_IT_T)
-
-/*#define ETH_DMA_ALL_INTS		ETH_DMA_IT_RBU | ETH_DMA_FLAG_T | ETH_DMA_FLAG_AIS */
 
 #define INT_MASK ((uint32_t) ~(ETH_DMA_IT_TBU))
 void HAL_ETH_IRQHandler(ETH_HandleTypeDef *heth)
@@ -1470,7 +1517,7 @@ static void ETH_FlushTransmitFIFO(ETH_HandleTypeDef *heth)
 /**
  * @}
  */
-#endif /* stm_is_F2 != 0 || stm_is_F4 != 0 || stm_is_F7 */
+#endif /* stm_is_F1 != 0 || stm_is_F2 != 0 || stm_is_F4 != 0 || stm_is_F7 */
 
 #endif /* HAL_ETH_MODULE_ENABLED */
 
