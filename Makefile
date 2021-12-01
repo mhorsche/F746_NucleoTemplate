@@ -39,6 +39,8 @@ C_SOURCES =  \
 Src/main.c \
 Src/mqtt_task.c \
 Src/iperf_task.c \
+Src/modbus_task.c \
+Src/modbus.c \
 Src/freertos.c \
 Src/stm32f7xx_it.c \
 Src/stm32f7xx_hal_msp.c 

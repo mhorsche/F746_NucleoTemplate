@@ -35,6 +35,7 @@
 /* Application include. */
 #include "mqtt_task.h"
 #include "iperf_task.h"
+#include "modbus_task.h"
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
@@ -234,7 +235,11 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
       /* For convenience, tasks that use FreeRTOS+TCP can be created here
        * to ensure they are not created before the network is usable. */
       vMQTTInstall();
+
       vIPerfInstall();
+
+      ModbusServerConfig_t xModbusServerConfig;
+      vModbusInstall(xModbusServerConfig);
 
       xTasksAlreadyCreated = pdTRUE;
     }

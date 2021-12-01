@@ -153,7 +153,7 @@ extern "C"
  * ipconfigMAX_SEND_BLOCK_TIME_TICKS is specified in RTOS ticks.  A time in
  * milliseconds can be converted to a time in ticks by dividing the time in
  * milliseconds by portTICK_PERIOD_MS. */
-#define ipconfigUDP_MAX_SEND_BLOCK_TIME_TICKS (5000 / portTICK_PERIOD_MS)
+#define ipconfigUDP_MAX_SEND_BLOCK_TIME_TICKS (pdMS_TO_TICKS(5000))
 
 /* If ipconfigUSE_DHCP is 1 then FreeRTOS+TCP will attempt to retrieve an IP
  * address, netmask, DNS server address and gateway address from a DHCP server.  If
@@ -373,7 +373,7 @@ UDP logging facility is used. */
  * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/UDP_Echo_Clients.html. */
 #define ipconfigECHO_SERVER_ADDR0 192
 #define ipconfigECHO_SERVER_ADDR1 168
-#define ipconfigECHO_SERVER_ADDR2 178
+#define ipconfigECHO_SERVER_ADDR2 179
 #define ipconfigECHO_SERVER_ADDR3 16
 #define ipconfigTCP_ECHO_CLIENT_PORT (7)
 
@@ -396,14 +396,14 @@ UDP logging facility is used. */
  * ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
 #define ipconfigIP_ADDR0 192
 #define ipconfigIP_ADDR1 168
-#define ipconfigIP_ADDR2 178
+#define ipconfigIP_ADDR2 179
 #define ipconfigIP_ADDR3 200
 
 /* Default gateway IP address configuration.  Used in ipconfigUSE_DHCP is set to
  * 0, or ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
 #define ipconfigGATEWAY_ADDR0 192
 #define ipconfigGATEWAY_ADDR1 168
-#define ipconfigGATEWAY_ADDR2 178
+#define ipconfigGATEWAY_ADDR2 179
 #define ipconfigGATEWAY_ADDR3 1
 
 /* Default DNS server configuration.  OpenDNS addresses are 208.67.222.222 and
@@ -421,17 +421,13 @@ UDP logging facility is used. */
 #define ipconfigNET_MASK2 255
 #define ipconfigNET_MASK3 0
 
-  // #define ipconfigFTP_ZERO_COPY_ALIGNED_WRITES 0
-  // #define ipconfigDNS_USE_CALLBACKS 0
-  // #define ipconfigSUPPORT_SIGNALS 0
+/* MODBUS Defines ------------------------------------------------------------*/
+/* By default sockets will block on a send or receive that cannot complete
+ * immediately. See the description of the ipconfigSOCK_DEFAULT_RECEIVE_BLOCK_TIME 
+ * and ipconfigSOCK_DEFAULT_SEND_BLOCK_TIME parameters. */
+#define ipconfigSOCKET_HAS_USER_SEMAPHORE 1
 
-  // #define ipconfigMAC_INTERRUPT_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
-
-  // #define ipconfigUSE_CALLBACKS 1
-
-  // #define ipconfigCHECK_IP_QUEUE_SPACE 1
-
-  /* iPerf v3.0 Defines --------------------------------------------------------*/
+/* iPerf v3.0 Defines --------------------------------------------------------*/
 
 /**
  * @brief The priority of prvIPerfTask(). Should be lower than the
@@ -470,7 +466,7 @@ UDP logging facility is used. */
  * @note If you would like to setup an MQTT broker for running this demo,
  * please see `mqtt_broker_setup.txt`.
  */
-#define ipconfigMQTT_BROKER_ENDPOINT "192.168.178.16"
+#define ipconfigMQTT_BROKER_ENDPOINT "192.168.179.16"
 
 /**
  * @brief The port to use for the demo.

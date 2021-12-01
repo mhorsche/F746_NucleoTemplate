@@ -193,8 +193,6 @@ static void prvIPerfServerWork(Socket_t xSocket);
 
 static void prvIPerfTCPClose(TcpClient_t *pxClient);
 
-static void prvIPerfTCPClose(TcpClient_t *pxClient);
-
 static int prvIPerfTCPSend(TcpClient_t *pxClient);
 
 static void prvIPerfTCPWork(TcpClient_t *pxClient);

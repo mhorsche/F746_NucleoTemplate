@@ -16,7 +16,6 @@
 
 /* Standard includes. */
 #include <string.h>
-#include <stdio.h>
 
 /* FreeRTOS includes. */
 #include <FreeRTOS.h>
@@ -354,7 +353,7 @@ void vMQTTInstall(void)
      * removes the need for the application writer to explicitly manage any MQTT
      * state or call the MQTT_ProcessLoop() API function. Using an agent task
      * also enables multiple application tasks to more easily share a single
-     * MQTT connection.*/
+     * MQTT connection. */
     xTaskCreate(prvMQTTDemoTask, "MQTT", ipconfigMQTT_STACK_SIZE_MQTT_TASK, NULL, ipconfigMQTT_PRIORITY_MQTT_TASK, &pxMQTTDemoTask);
   }
 }
@@ -388,66 +387,69 @@ static void prvMQTTDemoTask(void *pvParameters)
      * reached. The function below returns a failure status if the TCP connection
      * cannot be established to the broker after the configured number of attempts. */
     xNetworkStatus = prvConnectToServerWithBackoffRetries(&xNetworkContext);
-    configASSERT(xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS);
-    BSP_LED_On(LED_BLUE);
-
-    vTaskDelay(mqtttaskDELAY_BETWEEN_DEMO_ITERATIONS);
-
-    /* Sends an MQTT Connect packet over the already connected TCP socket,
-     * and waits for a connection acknowledgment (CONNACK) packet. */
-    LogInfo(("Creating an MQTT connection to %s.", ipconfigMQTT_BROKER_ENDPOINT));
-    prvCreateMQTTConnectionWithBroker(&xMQTTContext, &xNetworkContext);
-
-    /**************************** Subscribe. ******************************/
-
-    // /* If server rejected the subscription request, attempt to resubscribe to
-    //  * the topic. Attempts are made according to the exponential backoff retry
-    //  * strategy declared in backoff_algorithm.h. */
-    // prvMQTTSubscribeWithBackoffRetries(&xMQTTContext);
-
-    /******************* Publish and Keep Alive Loop. *********************/
-    /* Publish messages with QoS0, then send and process Keep Alive messages. */
-    for (ulPublishCount = 0; ulPublishCount < ulMaxPublishCount; ulPublishCount++)
+    // configASSERT(xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS);
+    if (xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS)
     {
-      LogInfo(("Publish to the MQTT topic %s.", mqtttaskTOPIC));
-      prvMQTTPublishToTopic(&xMQTTContext);
+      BSP_LED_On(LED_BLUE);
 
-      // /* Process the incoming publish echo. Since the application subscribed
-      //  * to the same topic, the broker will send the same publish message
-      //  * back to the application. */
-      // LogInfo(("Attempt to receive publish message from broker."));
+      vTaskDelay(mqtttaskDELAY_BETWEEN_DEMO_ITERATIONS);
+
+      /* Sends an MQTT Connect packet over the already connected TCP socket,
+     * and waits for a connection acknowledgment (CONNACK) packet. */
+      LogInfo(("Creating an MQTT connection to %s.", ipconfigMQTT_BROKER_ENDPOINT));
+      prvCreateMQTTConnectionWithBroker(&xMQTTContext, &xNetworkContext);
+
+      /**************************** Subscribe. ******************************/
+
+      // /* If server rejected the subscription request, attempt to resubscribe to
+      //  * the topic. Attempts are made according to the exponential backoff retry
+      //  * strategy declared in backoff_algorithm.h. */
+      // prvMQTTSubscribeWithBackoffRetries(&xMQTTContext);
+
+      /******************* Publish and Keep Alive Loop. *********************/
+      /* Publish messages with QoS0, then send and process Keep Alive messages. */
+      for (ulPublishCount = 0; ulPublishCount < ulMaxPublishCount; ulPublishCount++)
+      {
+        LogInfo(("Publish to the MQTT topic %s.", mqtttaskTOPIC));
+        prvMQTTPublishToTopic(&xMQTTContext);
+
+        // /* Process the incoming publish echo. Since the application subscribed
+        //  * to the same topic, the broker will send the same publish message
+        //  * back to the application. */
+        // LogInfo(("Attempt to receive publish message from broker."));
+        // xMQTTStatus = MQTT_ProcessLoop(&xMQTTContext,
+        //                                mqtttaskPROCESS_LOOP_TIMEOUT_MS);
+        // configASSERT(xMQTTStatus == MQTTSuccess);
+
+        /* Leave the connection idle for some time. */
+        LogInfo(("Keeping Connection Idle..."));
+        vTaskDelay(mqtttaskDELAY_BETWEEN_PUBLISHES);
+      }
+
+      /******************** Unsubscribe from the topic. *********************/
+      // LogInfo(("Unsubscribe from the MQTT topic %s.", mqtttaskTOPIC));
+      // prvMQTTUnsubscribeFromTopic(&xMQTTContext);
+
+      // /* Process the incoming packet from the broker. */
       // xMQTTStatus = MQTT_ProcessLoop(&xMQTTContext,
       //                                mqtttaskPROCESS_LOOP_TIMEOUT_MS);
       // configASSERT(xMQTTStatus == MQTTSuccess);
 
-      /* Leave the connection idle for some time. */
-      LogInfo(("Keeping Connection Idle..."));
-      vTaskDelay(mqtttaskDELAY_BETWEEN_PUBLISHES);
-    }
+      /**************************** Disconnect. *****************************/
 
-    /******************** Unsubscribe from the topic. *********************/
-    // LogInfo(("Unsubscribe from the MQTT topic %s.", mqtttaskTOPIC));
-    // prvMQTTUnsubscribeFromTopic(&xMQTTContext);
-
-    // /* Process the incoming packet from the broker. */
-    // xMQTTStatus = MQTT_ProcessLoop(&xMQTTContext,
-    //                                mqtttaskPROCESS_LOOP_TIMEOUT_MS);
-    // configASSERT(xMQTTStatus == MQTTSuccess);
-
-    /**************************** Disconnect. *****************************/
-
-    /* Send an MQTT Disconnect packet over the connected TCP socket.
+      /* Send an MQTT Disconnect packet over the connected TCP socket.
      * There is no corresponding response for a disconnect packet. After
      * sending the disconnect, the client must close the network connection. */
-    LogInfo(("Disconnecting the MQTT connection with %s.",
-             ipconfigMQTT_BROKER_ENDPOINT));
-    xMQTTStatus = MQTT_Disconnect(&xMQTTContext);
-    configASSERT(xMQTTStatus == MQTTSuccess);
+      LogInfo(("Disconnecting the MQTT connection with %s.",
+               ipconfigMQTT_BROKER_ENDPOINT));
+      xMQTTStatus = MQTT_Disconnect(&xMQTTContext);
+      configASSERT(xMQTTStatus == MQTTSuccess);
 
-    /* Close the network connection. */
-    xNetworkStatus = Plaintext_FreeRTOS_Disconnect(&xNetworkContext);
-    configASSERT(xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS);
-    BSP_LED_Off(LED_BLUE);
+      /* Close the network connection. */
+      xNetworkStatus = Plaintext_FreeRTOS_Disconnect(&xNetworkContext);
+      configASSERT(xNetworkStatus == PLAINTEXT_TRANSPORT_SUCCESS);
+      BSP_LED_Off(LED_BLUE);
+    }
 
     /* Reset SUBACK status for each topic filter after completion of
      * subscription request cycle. */
@@ -691,6 +693,7 @@ static void prvMQTTSubscribeWithBackoffRetries(MQTTContext_t *pxMQTTContext)
 }
 /*-----------------------------------------------------------*/
 
+static uint64_t runtime;
 static void prvMQTTPublishToTopic(MQTTContext_t *pxMQTTContext)
 {
   MQTTStatus_t xResult;
@@ -707,8 +710,12 @@ static void prvMQTTPublishToTopic(MQTTContext_t *pxMQTTContext)
   xMQTTPublishInfo.retain = false;
   xMQTTPublishInfo.pTopicName = mqtttaskTOPIC;
   xMQTTPublishInfo.topicNameLength = (uint16_t)strlen(mqtttaskTOPIC);
-  xMQTTPublishInfo.pPayload = mqtttaskMESSAGE;
-  xMQTTPublishInfo.payloadLength = strlen(mqtttaskMESSAGE);
+
+  runtime = ullGetMicrosecondTime();
+  xMQTTPublishInfo.pPayload = &runtime;
+  xMQTTPublishInfo.payloadLength = sizeof(runtime);
+  // xMQTTPublishInfo.pPayload = mqtttaskMESSAGE;
+  // xMQTTPublishInfo.payloadLength = strlen(mqtttaskMESSAGE);
 
   /* Send PUBLISH packet. Packet ID is not used for a QoS0 publish. */
   xResult = MQTT_Publish(pxMQTTContext, &xMQTTPublishInfo, 0U);

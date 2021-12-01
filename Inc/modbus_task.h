@@ -1,23 +1,24 @@
 /**
- * @file mqtt_task.h
+ * @file modbus_task.h
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1
- * @date 2021-11-18
+ * @date 2021-11-26
  * 
  * @copyright Copyright (c) 2021
  * 
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MQTT_TASK_H
-#define __MQTT_TASK_H
+#ifndef __MODBUS_TASK_H
+#define __MODBUS_TASK_H
 
 /* Includes ------------------------------------------------------------------*/
+#include "core_modbus.h"
+
 /* Exported functions --------------------------------------------------------*/
+void vModbusInstall(ModbusServerConfig_t xModbusServerConfig);
 
-void vMQTTInstall(void);
-
-#endif /* __MQTT_TASK_H */
+#endif /* __MODBUS_TASK_H */
 
 /***************************** END OF FILE ************************************/

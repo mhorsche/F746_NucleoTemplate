@@ -12,7 +12,7 @@
             "cwd": "${workspaceRoot}",
             "interface": "swd",
             "configFiles": [
-                "interface/stlink-v2.cfg",
+                "interface/stlink.cfg",
                 "target/stm32f7x.cfg"
             ]
         }

@@ -184,7 +184,7 @@ static void prvLedTask(void *pvParameters)
     /* Show task manager every 10 iterations */
     if (cnt++ % 10 == 9)
     {
-      vShowTaskTable(pdFALSE);
+      // vShowTaskTable(pdFALSE);
     }
 
     /* Toggle blue LED and write command via SWO/SWV */

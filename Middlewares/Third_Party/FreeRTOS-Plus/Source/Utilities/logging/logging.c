@@ -1,15 +1,13 @@
-/* USER CODE BEGIN Header */
 /**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- *
- ******************************************************************************
+ * @file logging.c
+ * @author your name (you@domain.com)
+ * @brief 
+ * @version 0.1
+ * @date 2021-11-26
+ * 
+ * @copyright Copyright (c) 2021
+ * 
  */
-/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -169,8 +167,11 @@ void vLoggingInit(BaseType_t xLogToUART,
       Error_Handler();
     }
 
-    /* Create the logging thread */
-    xLoggerTaskHandle = osThreadNew(prvLoggingThread, NULL, &xLoggerTaskAttributes);
+    if (xLoggerTaskHandle == NULL)
+    {
+      /* Create the logging thread. */
+      xLoggerTaskHandle = osThreadNew(prvLoggingThread, NULL, &xLoggerTaskAttributes);
+    }
   }
 #else  /* if ( ( ipconfigHAS_DEBUG_PRINTF == 1 ) || ( ipconfigHAS_PRINTF == 1 ) ) */
   {
