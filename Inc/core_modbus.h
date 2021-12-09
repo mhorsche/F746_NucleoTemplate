@@ -1,6 +1,6 @@
 /**
  * @file core_modbus.h
- * @author your name (you@domain.com)
+ * @author horsche (horsche@li.plus)
  * @brief 
  * @version 0.1
  * @date 2021-11-26

@@ -353,7 +353,7 @@ UDP logging facility is used. */
 /* Set to 1 to print out debug messages.  If ipconfigHAS_DEBUG_PRINTF is set to
  * 1 then FreeRTOS_debug_printf should be defined to the function used to print
  * out the debugging messages. */
-#define ipconfigHAS_DEBUG_PRINTF 1
+#define ipconfigHAS_DEBUG_PRINTF 0
 #if (ipconfigHAS_DEBUG_PRINTF == 1)
 #define FreeRTOS_debug_printf(X) vLoggingPrintf X
 #endif
@@ -373,7 +373,7 @@ UDP logging facility is used. */
  * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/UDP_Echo_Clients.html. */
 #define ipconfigECHO_SERVER_ADDR0 192
 #define ipconfigECHO_SERVER_ADDR1 168
-#define ipconfigECHO_SERVER_ADDR2 179
+#define ipconfigECHO_SERVER_ADDR2 1
 #define ipconfigECHO_SERVER_ADDR3 16
 #define ipconfigTCP_ECHO_CLIENT_PORT (7)
 
@@ -396,14 +396,14 @@ UDP logging facility is used. */
  * ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
 #define ipconfigIP_ADDR0 192
 #define ipconfigIP_ADDR1 168
-#define ipconfigIP_ADDR2 179
+#define ipconfigIP_ADDR2 1
 #define ipconfigIP_ADDR3 200
 
 /* Default gateway IP address configuration.  Used in ipconfigUSE_DHCP is set to
  * 0, or ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
 #define ipconfigGATEWAY_ADDR0 192
 #define ipconfigGATEWAY_ADDR1 168
-#define ipconfigGATEWAY_ADDR2 179
+#define ipconfigGATEWAY_ADDR2 1
 #define ipconfigGATEWAY_ADDR3 1
 
 /* Default DNS server configuration.  OpenDNS addresses are 208.67.222.222 and
@@ -458,7 +458,7 @@ UDP logging facility is used. */
  * @brief The priority of prvMQTTDemoTask(). Should be lower than the
  * IP-task and the task running in NetworkInterface.c.
  */
-#define ipconfigMQTT_PRIORITY_MQTT_TASK (ipconfigIP_TASK_PRIORITY - 3)
+#define ipconfigMQTT_PRIORITY_MQTT_TASK (3) //(ipconfigIP_TASK_PRIORITY - 3)
 
 /**
  * @brief MQTT broker end point to connect to.
@@ -466,7 +466,7 @@ UDP logging facility is used. */
  * @note If you would like to setup an MQTT broker for running this demo,
  * please see `mqtt_broker_setup.txt`.
  */
-#define ipconfigMQTT_BROKER_ENDPOINT "192.168.179.16"
+#define ipconfigMQTT_BROKER_ENDPOINT "192.168.1.16"
 
 /**
  * @brief The port to use for the demo.

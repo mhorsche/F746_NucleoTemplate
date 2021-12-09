@@ -1,6 +1,6 @@
 /**
  * @file modbus_task.c
- * @author your name (you@domain.com)
+ * @author horsche (horsche@li.plus)
  * @brief 
  * @version 0.1
  * @date 2021-11-26
@@ -420,9 +420,10 @@ static void prvModbusTask(void *pvParameters)
 
   vListInitialise(&xTCPClientList);
 
-  /* Wait until the network is up before creating the servers.  The
-   * notification is given from the network event hook. */
-  // xTaskNotifyGive( xModbusTaskHandle );
+  /* Wait until the network is up before creating the servers.  The notification
+   * is given from the network event hook 'vApplicationIPNetworkEventHook'.
+   *    xTaskNotifyGive(xModbusTaskHandle);
+   */
   // ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
   /* The priority of this task can be raised now the disk has been

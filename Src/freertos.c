@@ -1,9 +1,9 @@
 /**
  * @file freertos.c
- * @author your name (you@domain.com)
+ * @author horsche (horsche@li.plus)
  * @brief 
  * @version 0.1
- * @date 2021-11-25
+ * @date 2021-12-09
  * 
  * @copyright Copyright (c) 2021
  * 
@@ -234,12 +234,13 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
     {
       /* For convenience, tasks that use FreeRTOS+TCP can be created here
        * to ensure they are not created before the network is usable. */
-      vMQTTInstall();
-
       vIPerfInstall();
 
       ModbusServerConfig_t xModbusServerConfig;
       vModbusInstall(xModbusServerConfig);
+
+      /* Otherwise use notification */
+      xTaskNotifyGive(xMQTTTaskHandle);
 
       xTasksAlreadyCreated = pdTRUE;
     }

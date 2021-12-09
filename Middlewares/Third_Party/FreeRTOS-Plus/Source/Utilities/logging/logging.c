@@ -37,7 +37,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Used to dimension the array used to hold the messages.  The available space
  * will actually be one less than this, so 999. */
-#define loggingSTORAGE_SIZE_BYTES (1024)
+#define loggingSTORAGE_SIZE_BYTES (1024 + 512)
 #define loggingMAX_MESSAGE_SIZE (128)
 
 /* A block time of zero simply means don't block. */

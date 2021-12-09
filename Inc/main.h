@@ -1,9 +1,9 @@
 /**
  * @file main.h
- * @author your name (you@domain.com)
+ * @author horsche (horsche@li.plus)
  * @brief 
  * @version 0.1
- * @date 2021-11-18
+ * @date 2021-12-09
  * 
  * @copyright Copyright (c) 2021
  * 

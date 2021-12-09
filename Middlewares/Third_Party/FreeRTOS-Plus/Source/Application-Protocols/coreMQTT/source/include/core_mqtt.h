@@ -147,7 +147,9 @@ typedef enum MQTTSubAckStatus
     MQTTSubAckSuccessQos0 = 0x00, /**< @brief Success with a maximum delivery at QoS 0. */
     MQTTSubAckSuccessQos1 = 0x01, /**< @brief Success with a maximum delivery at QoS 1. */
     MQTTSubAckSuccessQos2 = 0x02, /**< @brief Success with a maximum delivery at QoS 2. */
-    MQTTSubAckFailure = 0x80      /**< @brief Failure. */
+    MQTTSubAckFailure = 0x80,     /**< @brief Failure. */
+    MQTTSubAckProceed = 0xFE,     /**< @brief Proceed. */
+    MQTTSubAckComplete = 0xFF     /**< @brief Complete. */
 } MQTTSubAckStatus_t;
 
 /**

@@ -1,9 +1,9 @@
 /**
  * @file main.c
- * @author your name (you@domain.com)
+ * @author horsche (horsche@li.plus)
  * @brief 
  * @version 0.1
- * @date 2021-11-18
+ * @date 2021-12-09
  * 
  * @copyright Copyright (c) 2021
  * 
@@ -32,13 +32,7 @@
 /* Utilities includes. */
 #include "logging.h"
 
-/** @addtogroup STM32F7xx_HAL_Examples
-  * @{
-  */
-
-/** @addtogroup GPIO_IOToggle
-  * @{
-  */
+#include "mqtt_task.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -56,8 +50,8 @@ const osThreadAttr_t xLedTaskAttributes =
 };
 
 /* The MAC address array is not declared const as the MAC address will
-normally be read from an EEPROM and not hard coded (in real deployed
-applications).*/
+ * normally be read from an EEPROM and not hard coded (in real deployed
+ * applications) .*/
 static uint8_t ucMACAddress[6] = {ipconfigMAC_ADDR0, ipconfigMAC_ADDR1, ipconfigMAC_ADDR2, ipconfigMAC_ADDR3, ipconfigMAC_ADDR4, ipconfigMAC_ADDR5};
 
 /* Define the network addressing.  These parameters will be used if either
@@ -75,7 +69,7 @@ static const uint8_t ucDNSServerAddress[4] = {ipconfigDNS_SERVER_ADDR0, ipconfig
  * then UDP messages are sent to the IP address configured as the echo server
  * address (see the configECHO_SERVER_ADDR0 definitions in FreeRTOSConfig.h) and
  * the port number set by configPRINT_PORT in FreeRTOSConfig.h. */
-const BaseType_t xLogToUART = pdTRUE, xLogToSWO = pdFALSE, xLogToUDP = pdTRUE;
+const BaseType_t xLogToUART = pdTRUE, xLogToSWO = pdFALSE, xLogToUDP = pdFALSE;
 
 /* Private function prototypes -----------------------------------------------*/
 extern void vShowTaskTable(BaseType_t xDoClear); /* @see freertos.c */
@@ -95,10 +89,10 @@ static void DebugMode_Config(void);
  */
 int main(void)
 {
-  // /* Enable I-Cache */
+  /* Enable I-Cache */
   // SCB_EnableICache();
 
-  // /* Enable D-Cache */
+  /* Enable D-Cache */
   // SCB_EnableDCache();
 
   /* STM32F7xx HAL library initialization:
@@ -147,6 +141,7 @@ int main(void)
   FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
 
   /* Definition and creation of FreeRTOS Threads (Tasks) */
+  vMQTTInstall();
   xLedTaskHandle = osThreadNew(prvLedTask, NULL, &xLedTaskAttributes);
 
   /* Init and start scheduler */
@@ -175,17 +170,89 @@ UBaseType_t uxRand(void)
 }
 /*-----------------------------------------------------------*/
 
+static void echo(MQTTMessageItem_t *pxMessageItem, MQTTPublishInfo_t *pxPublishInfo)
+{
+  if (pxPublishInfo != NULL)
+  {
+    LogInfo(("%.*s",
+             pxPublishInfo->payloadLength,
+             pxPublishInfo->pPayload));
+  }
+}
+static void subscribe(MQTTMessageItem_t *pxMessageItem, MQTTPublishInfo_t *pxPublishInfo)
+{
+  if (pxPublishInfo != NULL)
+  {
+    LogInfo(("Subscribe to topic '%.*s'.",
+             pxMessageItem->xRequest.usTopicLength,
+             pxMessageItem->xRequest.ucTopic));
+    vMQTTSubscribe(pxPublishInfo->pPayload, pxPublishInfo->payloadLength, 0, echo);
+  }
+}
+static void unsubscribe(MQTTMessageItem_t *pxMessageItem, MQTTPublishInfo_t *pxPublishInfo)
+{
+  if (pxPublishInfo != NULL)
+  {
+    LogInfo(("Unsubscribe from topic '%.*s'.",
+             pxMessageItem->xRequest.usTopicLength,
+             pxMessageItem->xRequest.ucTopic));
+    vMQTTUnsubscribe(pxPublishInfo->pPayload, pxPublishInfo->payloadLength);
+  }
+}
+static void pvFreePublishedPayload(MQTTMessageItem_t *pxMessageItem, MQTTPublishInfo_t *pxPublishInfo)
+{
+  if (pxMessageItem->xRequest.pPayload != NULL)
+  {
+    LogInfo(("Free published payload 0x%p (%d bytes) for topic '%.*s'.",
+             pxMessageItem->xRequest.pPayload,
+             pxMessageItem->xRequest.xPayloadLength,
+             pxMessageItem->xRequest.usTopicLength,
+             pxMessageItem->xRequest.ucTopic));
+
+    vPortFree((void *)(pxMessageItem->xRequest.pPayload));
+  }
+}
+
+static uint64_t runtime;
 static void prvLedTask(void *pvParameters)
 {
   uint32_t cnt = 0;
+
+  /* Simple echo subsription which will display all incoming messages
+   * using LogInfo in the echo callback function. */
+  vMQTTSubscribe("echo", strlen("echo"), 0, echo);
+
+  /* To test dynamic subscription/unsubsription publish a message
+   * with topic 'sub' and payload 'hello'. The client will subscribe
+   * to the topic 'hello' then. To test this, just publish 'world' on
+   * the topic 'hello'. Afterwards unsubsribe by publishing 'hello' to
+   * topic 'unsub'. */
+  vMQTTSubscribe("sub", strlen("sub"), 2, subscribe);
+  vMQTTSubscribe("unsub", strlen("unsub"), 2, unsubscribe);
 
   for (;;)
   {
     /* Show task manager every 10 iterations */
     if (cnt++ % 10 == 9)
     {
-      // vShowTaskTable(pdFALSE);
+      vShowTaskTable(pdFALSE);
     }
+
+    /* Allocate array for whole alphabet, the dynamic allocated memory is freed by the 
+     * given callback function pvFreePublishedPayload. */
+    size_t xSize = 26;
+    char *pcVarChar;
+    pcVarChar = pvPortMalloc(xSize);
+    for (int i = 0; i < xSize; i++)
+    {
+      pcVarChar[i] = ('a' + i);
+    }
+    vMQTTPublish("varchar", strlen("varchar"), pcVarChar, xSize, 0, pdFALSE, pvFreePublishedPayload);
+
+    /* Simply publish current runtime in Microseconds as uint64_t (8 byte) value. No callback
+     * function needed since the payload is reused. */
+    runtime = ullGetMicrosecondTime();
+    vMQTTPublish("ping", strlen("ping"), &runtime, sizeof(runtime), 2, pdFALSE, NULL);
 
     /* Toggle blue LED and write command via SWO/SWV */
     BSP_LED_Toggle(LED_GREEN);
@@ -239,11 +306,10 @@ static void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure LSE Drive Capability
-   */
+  /* Configure LSE Drive Capability */
   HAL_PWR_EnableBkUpAccess();
-  /** Configure the main internal regulator output voltage
-   */
+
+  /* Configure the main internal regulator output voltage */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
@@ -253,6 +319,13 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 8;
+  // RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  // RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  // RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  // RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  // RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  // RCC_OscInitStruct.PLL.PLLM = 16;
+
   RCC_OscInitStruct.PLL.PLLN = 432;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 9;
@@ -268,7 +341,7 @@ static void SystemClock_Config(void)
   }
 
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 
-     clocks dividers */
+   * clocks dividers */
   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
@@ -344,11 +417,4 @@ void assert_failed(uint8_t *file, uint32_t line)
 /*-----------------------------------------------------------*/
 #endif
 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 /********************************** END OF FILE *******************************/
