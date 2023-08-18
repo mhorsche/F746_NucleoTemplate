@@ -1,7 +1,7 @@
 # Ignore those
 .vscode/
 
-build/
+.build/
 
 .DS_Store
 *.zip
@@ -15,4 +15,9 @@ build/
 !.vscode/tasks.json
 
 !makefile
-!build/firmware.*
+!.build/firmware.*
+
+# Ignore FreeRTOS subfolders dependency, test and tools
+**/dependency/*
+**/test/*
+**/tools/*

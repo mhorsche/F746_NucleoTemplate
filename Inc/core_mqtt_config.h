@@ -67,7 +67,7 @@ extern void vLoggingPrintf(const char *pcFormatString,
 
 /**
  * @brief The maximum number of MQTT PUBLISH messages that may be pending
- * acknowledgement at any time.
+ * acknowledgment at any time.
  *
  * QoS 1 and 2 MQTT PUBLISHes require acknowledgment from the server before
  * they can be completed. While they are awaiting the acknowledgment, the
@@ -75,6 +75,57 @@ extern void vLoggingPrintf(const char *pcFormatString,
  * macro sets the limit on how many simultaneous PUBLISH states an MQTT
  * context maintains.
  */
-#define MQTT_STATE_ARRAY_MAX_COUNT 10U
+#define MQTT_STATE_ARRAY_MAX_COUNT (20U)
+#define MQTT_RECV_POLLING_TIMEOUT_MS (1000)
+
+/*_RB_ To document and add to the mqtt config defaults header file. */
+#define MQTT_AGENT_COMMAND_QUEUE_LENGTH (25)
+#define MQTT_COMMAND_CONTEXTS_POOL_SIZE (10)
+
+/* MQTT_AGENT_DO_NOT_USE_CUSTOM_CONFIG allows building the MQTT library
+ * without a custom config. If a custom config is provided, the
+ * MQTT_AGENT_DO_NOT_USE_CUSTOM_CONFIG macro should be defined. */
+#define MQTT_AGENT_DO_NOT_USE_CUSTOM_CONFIG
+
+/**
+ * @brief The maximum number of subscriptions to track for a single connection.
+ *
+ * @note The MQTT agent keeps a record of all existing MQTT subscriptions.
+ * MQTT_AGENT_MAX_SIMULTANEOUS_SUBSCRIPTIONS sets the maximum number of
+ * subscriptions records that can be maintained at one time.  The higher this
+ * number is the greater the agent's RAM consumption will be.
+ */
+#define MQTT_AGENT_MAX_SIMULTANEOUS_SUBSCRIPTIONS (10)
+
+/**
+ * @brief Size of statically allocated buffers for holding subscription filters.
+ *
+ * @note Subscription filters are strings such as "/my/topicname/#".  These
+ * strings are limited to a maximum of MQTT_AGENT_MAX_SUBSCRIPTION_FILTER_LENGTH
+ * characters. The higher this number is the greater the agent's RAM consumption
+ * will be.
+ */
+#define MQTT_AGENT_MAX_SUBSCRIPTION_FILTER_LENGTH (100)
+
+/**
+ * @brief Dimensions the buffer used to serialize and deserialize MQTT packets.
+ * @note Specified in bytes.  Must be large enough to hold the maximum
+ * anticipated MQTT payload.
+ */
+#define MQTT_AGENT_NETWORK_BUFFER_SIZE (5000)
+
+/**
+ * @brief Time in milliseconds that the MQTT agent task will wait in the Blocked state (so
+ * not using any CPU time) for a command to arrive in its command queue before
+ * exiting the blocked state so it can call MQTT_ProcessLoop().
+ *
+ * @note It is important MQTT_ProcessLoop() is called often if there is known
+ * MQTT traffic, but calling it too often can take processing time away from
+ * lower priority tasks and waste CPU time and power.
+ *
+ * <b>Possible values:</b> Any positive 32 bit integer. <br>
+ * <b>Default value:</b> `1000`
+ */
+#define MQTT_AGENT_MAX_EVENT_QUEUE_WAIT_TIME (100U)
 
 #endif /* ifndef CORE_MQTT_CONFIG_H */

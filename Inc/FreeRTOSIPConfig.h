@@ -26,11 +26,11 @@
  */
 
 /*****************************************************************************
-*
-* See the following URL for configuration information.
-* http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/TCP_IP_Configuration.html
-*
-*****************************************************************************/
+ *
+ * See the following URL for configuration information.
+ * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/TCP_IP_Configuration.html
+ *
+ *****************************************************************************/
 
 #ifndef FREERTOS_IP_CONFIG_H
 #define FREERTOS_IP_CONFIG_H
@@ -40,7 +40,7 @@ extern "C"
 {
 #endif
 
-#include "stm32f7xx_hal.h"
+#include "stm32f7xx_common.h"
 
 /* Define names that will be used for DNS, LLMNR and NBNS searches. */
 #define mainHOST_NAME "stm32-nucleo"
@@ -87,7 +87,7 @@ extern "C"
 
 /* Include support for LLMNR: Link-local Multicast Name Resolution
  * (non-Microsoft) */
-#define ipconfigUSE_LLMNR (1)
+#define ipconfigUSE_LLMNR (0)
 
 /* Include support for NBNS: NetBIOS Name Service (Microsoft) */
 #define ipconfigUSE_NBNS (0)
@@ -98,13 +98,13 @@ extern "C"
  * socket has been destroyed, the result will be stored into the cache.  The next
  * call to FreeRTOS_gethostbyname() will return immediately, without even creating
  * a socket. */
-#define ipconfigUSE_DNS_CACHE (0)
+#define ipconfigUSE_DNS_CACHE (1)
 #define ipconfigDNS_CACHE_NAME_LENGTH (16)
 #define ipconfigDNS_CACHE_ENTRIES (4)
 #define ipconfigDNS_REQUEST_ATTEMPTS (4)
 
 /* The IP stack executes it its own task (although any application task can make
- * use of its services through the published sockets API). ipconfigUDP_TASK_PRIORITY
+ * use of its services through the published sockets API). ipconfigIP_TASK_PRIORITY
  * sets the priority of the task that executes the IP stack.  The priority is a
  * standard FreeRTOS task priority so can take any value from 0 (the lowest
  * priority) to (configMAX_PRIORITIES - 1) (the highest priority).
@@ -112,6 +112,7 @@ extern "C"
  * FreeRTOSConfig.h, not FreeRTOSIPConfig.h. Consideration needs to be given as to
  * the priority assigned to the task executing the IP stack relative to the
  * priority assigned to tasks that use the IP stack. */
+#define ipconfigIP_SERVICE_TASK_NAME "IP"
 #define ipconfigIP_TASK_PRIORITY (configMAX_PRIORITIES - 2)
 
 /* The size, in words (not bytes), of the stack allocated to the FreeRTOS+TCP
@@ -119,18 +120,18 @@ extern "C"
  * as the Win32 simulator only stores a fixed amount of information on the task
  * stack.  FreeRTOS includes optional stack overflow detection, see:
  * http://www.freertos.org/Stacks-and-stack-overflow-checking.html */
-#define ipconfigIP_TASK_STACK_SIZE_WORDS (configMINIMAL_STACK_SIZE * 5)
+#define ipconfigIP_TASK_STACK_SIZE_WORDS (2 * configMINIMAL_STACK_SIZE)
 
 /* Default the size of the stack used by the EMAC deferred handler task to twice
  * the size of the stack used by the idle task - but allow this to be overridden in
  * FreeRTOSConfig.h as configMINIMAL_STACK_SIZE is a user definable constant. */
-#define ipconfigEMAC_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE * 5)
+#define ipconfigEMAC_TASK_STACK_SIZE (4 * configMINIMAL_STACK_SIZE)
 
   /* ipconfigRAND32() is called by the IP stack to generate random numbers for
- * things such as a DHCP transaction number or initial sequence number.  Random
- * number generation is performed via this macro to allow applications to use their
- * own random number generation method.  For example, it might be possible to
- * generate a random number by sampling noise on an analogue input. */
+   * things such as a DHCP transaction number or initial sequence number.  Random
+   * number generation is performed via this macro to allow applications to use their
+   * own random number generation method.  For example, it might be possible to
+   * generate a random number by sampling noise on an analogue input. */
   extern UBaseType_t uxRand();
 #define ipconfigRAND32() uxRand()
 
@@ -245,11 +246,27 @@ extern "C"
 /* USE_TCP: Use TCP and all its features */
 #define ipconfigUSE_TCP (1)
 
+/*
+ * If defined this macro enables the APIs that are backward compatible
+ * with single end point IPv4 version of the FreeRTOS+TCP library.
+ */
+#define ipconfigIPv4_BACKWARD_COMPATIBLE (1)
+
+/* Only one interface and one end-point is defined. */
+#define ipconfigCOMPATIBLE_WITH_SINGLE (1)
+#define ipconfigMULTI_INTERFACE (0)
+#define ipconfigPHY_MAX_PORTS (1)
+
+/* Disable DHCPv6, use IPv4 only. */
+#define ipconfigUSE_IPv6 (0)
+#define ipconfigUSE_DHCPv6 (0)
+
 /* Use the TCP socket wake context with a callback. */
-#define ipconfigSOCKET_HAS_USER_WAKE_CALLBACK_WITH_CONTEXT (1)
+// #define ipconfigSOCKET_HAS_USER_WAKE_CALLBACK_WITH_CONTEXT (1)
+#define ipconfigSOCKET_HAS_USER_WAKE_CALLBACK (1)
 
 /* USE_WIN: Let TCP use windowing mechanism. */
-#define ipconfigUSE_TCP_WIN (0)
+#define ipconfigUSE_TCP_WIN (1)
 
 /* The MTU is the maximum number of bytes the payload of a network frame can
  * contain.  For normal Ethernet V2 frames the maximum MTU is 1500.  Setting a
@@ -325,18 +342,18 @@ extern "C"
 #define ipconfigTCP_KEEP_ALIVE (1)
 #define ipconfigTCP_KEEP_ALIVE_INTERVAL (20) /* in seconds */
 
-/* If ipconfigUSE_DHCP_HOOK is set to 1 then FreeRTOS+TCP will call an 
- * application provided hook (or 'callback') function called 
- * xApplicationDHCPUserHook() both before the initial discovery 
- * packet is sent, and after a DHCP offer has been received - the hook 
- * function can be used to terminate the DHCP process at either one of 
- * these two phases in the DHCP sequence. For example, the application 
- * writer can effectively disable DHCP, even when ipconfigUSE_DHCP is set 
- * to 1, by terminating the DHCP process before the initial discovery 
- * packet is sent. As another example, the application writer can check a 
- * static IP address is compatible with the network to which the device is 
- * connected by receiving an IP address offer from a DHCP server, but then 
- * terminating the DHCP process without sending a request packet to claim 
+/* If ipconfigUSE_DHCP_HOOK is set to 1 then FreeRTOS+TCP will call an
+ * application provided hook (or 'callback') function called
+ * xApplicationDHCPUserHook() both before the initial discovery
+ * packet is sent, and after a DHCP offer has been received - the hook
+ * function can be used to terminate the DHCP process at either one of
+ * these two phases in the DHCP sequence. For example, the application
+ * writer can effectively disable DHCP, even when ipconfigUSE_DHCP is set
+ * to 1, by terminating the DHCP process before the initial discovery
+ * packet is sent. As another example, the application writer can check a
+ * static IP address is compatible with the network to which the device is
+ * connected by receiving an IP address offer from a DHCP server, but then
+ * terminating the DHCP process without sending a request packet to claim
  * the offered IP address. */
 #define ipconfigUSE_DHCP_HOOK (1)
 
@@ -353,7 +370,7 @@ UDP logging facility is used. */
 /* Set to 1 to print out debug messages.  If ipconfigHAS_DEBUG_PRINTF is set to
  * 1 then FreeRTOS_debug_printf should be defined to the function used to print
  * out the debugging messages. */
-#define ipconfigHAS_DEBUG_PRINTF 0
+#define ipconfigHAS_DEBUG_PRINTF 1
 #if (ipconfigHAS_DEBUG_PRINTF == 1)
 #define FreeRTOS_debug_printf(X) vLoggingPrintf X
 #endif
@@ -367,43 +384,40 @@ UDP logging facility is used. */
 #define FreeRTOS_printf(X) vLoggingPrintf X
 #endif
 
-/* The address of an echo server that will be used by the two demo echo client
- * tasks:
- * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/TCP_Echo_Clients.html,
- * http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/UDP_Echo_Clients.html. */
-#define ipconfigECHO_SERVER_ADDR0 192
-#define ipconfigECHO_SERVER_ADDR1 168
-#define ipconfigECHO_SERVER_ADDR2 1
-#define ipconfigECHO_SERVER_ADDR3 16
-#define ipconfigTCP_ECHO_CLIENT_PORT (7)
-
-/* The UDP port to which print messages are sent. */
-#define ipconfigPRINT_PORT (15000)
-
 /* Default MAC address configuration.  The demo creates a virtual network
  * connection that uses this MAC address by accessing the raw Ethernet/WiFi data
  * to and from a real network connection on the host PC.  See the
  * configNETWORK_INTERFACE_TO_USE definition above for information on how to
  * configure the real network connection to use. */
-#define ipconfigMAC_ADDR0 0x00
-#define ipconfigMAC_ADDR1 0x11
-#define ipconfigMAC_ADDR2 0x22
-#define ipconfigMAC_ADDR3 0x33
-#define ipconfigMAC_ADDR4 0x44
-#define ipconfigMAC_ADDR5 0x55
+#define ipconfigMAC_ADDR0 0x00U
+#define ipconfigMAC_ADDR1 0x02U
+#define ipconfigMAC_ADDR2 0xA7U
+#define ipconfigMAC_ADDR3 stm32f7xxGET_UNIQUE_BYTE(0)
+#define ipconfigMAC_ADDR4 stm32f7xxGET_UNIQUE_BYTE(2)
+#define ipconfigMAC_ADDR5 stm32f7xxGET_UNIQUE_BYTE(4)
 
 /* Default IP address configuration.  Used in ipconfigUSE_DHCP is set to 0, or
  * ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
 #define ipconfigIP_ADDR0 192
 #define ipconfigIP_ADDR1 168
-#define ipconfigIP_ADDR2 1
-#define ipconfigIP_ADDR3 200
+#define ipconfigIP_ADDR2 178
+#define ipconfigIP_ADDR3 188
+
+/* The address of an logging server that will be used to send messages via UDP
+ * protocol. */
+#define ipconfigLOGGING_SERVER_ADDR0 ipconfigIP_ADDR0
+#define ipconfigLOGGING_SERVER_ADDR1 ipconfigIP_ADDR1
+#define ipconfigLOGGING_SERVER_ADDR2 ipconfigIP_ADDR2
+#define ipconfigLOGGING_SERVER_ADDR3 2
+
+/* The UDP port to which print messages are sent. */
+#define ipconfigLOGGING_SERVER_PORT (9021)
 
 /* Default gateway IP address configuration.  Used in ipconfigUSE_DHCP is set to
  * 0, or ipconfigUSE_DHCP is set to 1 but a DNS server cannot be contacted. */
-#define ipconfigGATEWAY_ADDR0 192
-#define ipconfigGATEWAY_ADDR1 168
-#define ipconfigGATEWAY_ADDR2 1
+#define ipconfigGATEWAY_ADDR0 ipconfigIP_ADDR0
+#define ipconfigGATEWAY_ADDR1 ipconfigIP_ADDR1
+#define ipconfigGATEWAY_ADDR2 ipconfigIP_ADDR2
 #define ipconfigGATEWAY_ADDR3 1
 
 /* Default DNS server configuration.  OpenDNS addresses are 208.67.222.222 and
@@ -421,9 +435,30 @@ UDP logging facility is used. */
 #define ipconfigNET_MASK2 255
 #define ipconfigNET_MASK3 0
 
+/* Wake-on-LAN (WoL) Defines -------------------------------------------------*/
+/**
+ * @brief Wake-on-LAN (WoL) magic packet enabled, @see NetworkInterface.c.
+ */
+#define ipconfigETHERNET_WOL_ENABLE 1
+
+/* MAC address for magic packet detection. */
+#define ipconfigWOL_MAC_ADDR0 ipconfigMAC_ADDR0
+#define ipconfigWOL_MAC_ADDR1 ipconfigMAC_ADDR1
+#define ipconfigWOL_MAC_ADDR2 ipconfigMAC_ADDR2
+#define ipconfigWOL_MAC_ADDR3 0xFFU
+#define ipconfigWOL_MAC_ADDR4 0xFFU
+#define ipconfigWOL_MAC_ADDR5 0xFFU
+
+/* If ipconfigUSE_PHY_INTERRUPT_HOOK is set to 1 then FreeRTOS+TCP will call an
+ * application provided hook (or 'callback') function called
+ * vApplicationPhyInterruptHook(). The prvEMACHandlerTask reads PHY's status
+ * interrupt register (and Wake-on-LAN register) to determine interrupt
+ * source. */
+#define ipconfigUSE_PHY_INTERRUPT_HOOK (1)
+
 /* MODBUS Defines ------------------------------------------------------------*/
 /* By default sockets will block on a send or receive that cannot complete
- * immediately. See the description of the ipconfigSOCK_DEFAULT_RECEIVE_BLOCK_TIME 
+ * immediately. See the description of the ipconfigSOCK_DEFAULT_RECEIVE_BLOCK_TIME
  * and ipconfigSOCK_DEFAULT_SEND_BLOCK_TIME parameters. */
 #define ipconfigSOCKET_HAS_USER_SEMAPHORE 1
 
@@ -435,41 +470,32 @@ UDP logging facility is used. */
  */
 #define ipconfigIPERF_PRIORITY_IPERF_TASK (ipconfigIP_TASK_PRIORITY - 2)
 
+/* corePING Defines ----------------------------------------------------------*/
+
+/* Default Ping Request IP address configuration. */
+#define ipconfigPING_REQUEST_ADDR0 ipconfigIP_ADDR0
+#define ipconfigPING_REQUEST_ADDR1 ipconfigIP_ADDR1
+#define ipconfigPING_REQUEST_ADDR2 ipconfigIP_ADDR2
+#define ipconfigPING_REQUEST_ADDR3 2
+
+/* coreMODBUS Defines ----------------------------------------------------------*/
+
+/**
+ * @brief Put the TCP server at this port number:
+ *    502 seems to be the standard TCP server port number.
+ */
+#define ipconfigMODBUS_TCP_PORT (502)
+
 /* coreMQTT Defines ----------------------------------------------------------*/
 
-/**
- * @brief The MQTT client identifier used in this example.  Each client identifier
- * must be unique so edit as required to ensure no two clients connecting to the
- * same broker use the same client identifier.
- *
- * @note Appending __TIME__ to the client id string will reduce the possibility of a
- * client id collision in the broker. Note that the appended time is the compilation
- * time. This client id can cause collision, if more than one instance of the same
- * binary is used at the same time to connect to the broker.
- */
-#define ipconfigCLIENT_IDENTIFIER "testClient"__TIME__
+/* Default MQTT Broker IP address configuration. */
+#define ipconfigMQTT_BROKER_ADDR0 ipconfigIP_ADDR0
+#define ipconfigMQTT_BROKER_ADDR1 ipconfigIP_ADDR1
+#define ipconfigMQTT_BROKER_ADDR2 ipconfigIP_ADDR2
+#define ipconfigMQTT_BROKER_ADDR3 2
 
 /**
- * @brief Stack size needed for prvMQTTDemoTask(), a bit of a guess.
- */
-#define ipconfigMQTT_STACK_SIZE_MQTT_TASK (configMINIMAL_STACK_SIZE * 10)
-
-/**
- * @brief The priority of prvMQTTDemoTask(). Should be lower than the
- * IP-task and the task running in NetworkInterface.c.
- */
-#define ipconfigMQTT_PRIORITY_MQTT_TASK (3) //(ipconfigIP_TASK_PRIORITY - 3)
-
-/**
- * @brief MQTT broker end point to connect to.
- *
- * @note If you would like to setup an MQTT broker for running this demo,
- * please see `mqtt_broker_setup.txt`.
- */
-#define ipconfigMQTT_BROKER_ENDPOINT "192.168.1.16"
-
-/**
- * @brief The port to use for the demo.
+ * @brief MQTT Broker port number.
  */
 #define ipconfigMQTT_BROKER_PORT (1883)
 

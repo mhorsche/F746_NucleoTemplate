@@ -69,9 +69,9 @@ The normal workflow is to run task `🔨 Build (GCC)` by pressing `STRG+SHIFT+B`
 
 ```c
    text    data     bss     dec     hex filename
-   8980     132    1588   10700    29cc build/firmware.elf
-arm-none-eabi-objcopy -O ihex build/firmware.elf build/firmware.hex
-arm-none-eabi-objcopy -O binary -S build/firmware.elf build/firmware.bin
+   8980     132    1588   10700    29cc .build/firmware.elf
+arm-none-eabi-objcopy -O ihex .build/firmware.elf .build/firmware.hex
+arm-none-eabi-objcopy -O binary -S .build/firmware.elf .build/firmware.bin
 ```
 
 Afterwards run task `🛠️ Program & Verfiy STM (OpenOCD)` by pressing `STRG+P` and type in `task Program` and hit `Enter`. Additional tasks are defined in `.vscode/tasks.json`. Now your microcontroller is flashed and autostarts with the simple blinky project.

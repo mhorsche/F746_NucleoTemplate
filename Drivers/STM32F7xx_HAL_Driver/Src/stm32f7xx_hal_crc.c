@@ -9,6 +9,17 @@
   *           + Peripheral Control functions
   *           + Peripheral State functions
   *
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
   @verbatim
  ===============================================================================
                      ##### How to use this driver #####
@@ -27,18 +38,52 @@
              input data buffer starting with the defined initialization value
              (default or non-default) to initiate CRC calculation
 
+    ##### Callback registration #####
+    ==================================
+
+    [..]
+    The compilation define USE_HAL_CRC_REGISTER_CALLBACKS when set to 1
+    allows the user to configure dynamically the driver callbacks.
+
+    [..]
+    Use Function @ref HAL_CRC_RegisterCallback() to register a user callback.
+    Function @ref HAL_CRC_RegisterCallback() allows to register following callbacks:
+    (+) MspInitCallback           : CRC MspInit.
+    (+) MspDeInitCallback         : CRC MspDeInit.
+    This function takes as parameters the HAL peripheral handle, the Callback ID
+    and a pointer to the user callback function.
+
+    [..]
+    Use function @ref HAL_CRC_UnRegisterCallback() to reset a callback to the default
+    weak (surcharged) function.
+    @ref HAL_CRC_UnRegisterCallback() takes as parameters the HAL peripheral handle,
+    and the Callback ID.
+    This function allows to reset following callbacks:
+    (+) MspInitCallback           : CRC MspInit.
+    (+) MspDeInitCallback         : CRC MspDeInit.
+
+    [..]
+    Exception done for MspInit and MspDeInit functions that are respectively
+    reset to the legacy weak (surcharged) functions in the @ref HAL_CRC_Init()
+    and @ref HAL_CRC_DeInit() only when these callbacks are null (not registered beforehand).
+    If not, MspInit or MspDeInit are not null, the @ref HAL_CRC_Init() and @ref HAL_CRC_DeInit()
+    keep and use the user MspInit/MspDeInit callbacks (registered beforehand).
+
+    [..]
+    Callbacks can be registered/unregistered in HAL_CRC_STATE_READY state only.
+    Exception done MspInit/MspDeInit that can be registered/unregistered
+    in HAL_CRC_STATE_READY or HAL_CRC_STATE_RESET state, thus registered (user)
+    MspInit/DeInit callbacks can be used during the Init/DeInit.
+    In that case first register the MspInit/MspDeInit user callbacks
+    using @ref HAL_CRC_RegisterCallback() before calling @ref HAL_CRC_DeInit()
+    or @ref HAL_CRC_Init() function.
+
+    [..]
+    When The compilation define USE_HAL_CRC_REGISTER_CALLBACKS is set to 0 or
+    not defined, the callback registration feature is not available
+    and weak (surcharged) callbacks are used.
+
   @endverbatim
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
   ******************************************************************************
   */
 
@@ -62,8 +107,8 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /** @defgroup CRC_Private_Functions CRC Private Functions
- * @{
- */
+  * @{
+  */
 static uint32_t CRC_Handle_8(CRC_HandleTypeDef *hcrc, uint8_t pBuffer[], uint32_t BufferLength);
 static uint32_t CRC_Handle_16(CRC_HandleTypeDef *hcrc, uint16_t pBuffer[], uint32_t BufferLength);
 /**
@@ -77,8 +122,8 @@ static uint32_t CRC_Handle_16(CRC_HandleTypeDef *hcrc, uint16_t pBuffer[], uint3
   */
 
 /** @defgroup CRC_Exported_Functions_Group1 Initialization and de-initialization functions
- *  @brief    Initialization and Configuration functions.
- *
+  *  @brief    Initialization and Configuration functions.
+  *
 @verbatim
  ===============================================================================
             ##### Initialization and de-initialization functions #####
@@ -111,6 +156,21 @@ HAL_StatusTypeDef HAL_CRC_Init(CRC_HandleTypeDef *hcrc)
   /* Check the parameters */
   assert_param(IS_CRC_ALL_INSTANCE(hcrc->Instance));
 
+#if (USE_HAL_CRC_REGISTER_CALLBACKS == 1)
+  if (hcrc->State == HAL_CRC_STATE_RESET)
+  {
+    /* Allocate lock resource and initialize it */
+    hcrc->Lock = HAL_UNLOCKED;
+
+    if (hcrc->MspInitCallback == NULL)
+    {
+      hcrc->MspInitCallback = HAL_CRC_MspInit; /* Legacy weak MspInit  */
+    }
+
+    /* Init the low level hardware */
+    hcrc->MspInitCallback(hcrc);
+  }
+#else
   if (hcrc->State == HAL_CRC_STATE_RESET)
   {
     /* Allocate lock resource and initialize it */
@@ -118,6 +178,7 @@ HAL_StatusTypeDef HAL_CRC_Init(CRC_HandleTypeDef *hcrc)
     /* Init the low level hardware */
     HAL_CRC_MspInit(hcrc);
   }
+#endif /* USE_HAL_CRC_REGISTER_CALLBACKS */
 
   hcrc->State = HAL_CRC_STATE_BUSY;
 
@@ -202,8 +263,18 @@ HAL_StatusTypeDef HAL_CRC_DeInit(CRC_HandleTypeDef *hcrc)
   /* Reset IDR register content */
   CLEAR_BIT(hcrc->Instance->IDR, CRC_IDR_IDR);
 
+#if (USE_HAL_CRC_REGISTER_CALLBACKS == 1)
+  if (hcrc->MspDeInitCallback == NULL)
+  {
+    hcrc->MspDeInitCallback = HAL_CRC_MspDeInit; /* Legacy weak MspDeInit  */
+  }
+
+  /* DeInit the low level hardware */
+  hcrc->MspDeInitCallback(hcrc);
+#else
   /* DeInit the low level hardware */
   HAL_CRC_MspDeInit(hcrc);
+#endif /* USE_HAL_CRC_REGISTER_CALLBACKS */
 
   /* Change CRC peripheral state */
   hcrc->State = HAL_CRC_STATE_RESET;
@@ -245,13 +316,115 @@ __weak void HAL_CRC_MspDeInit(CRC_HandleTypeDef *hcrc)
    */
 }
 
+#if (USE_HAL_CRC_REGISTER_CALLBACKS == 1)
+/**
+  * @brief  Register a User CRC Callback
+  *         To be used instead of the weak predefined callback
+  * @param  hcrc CRC handle
+  * @param  CallbackID ID of the callback to be registered
+  *         This parameter can be one of the following values:
+  *          @arg @ref HAL_CRC_MSPINIT_CB_ID MspInit callback ID
+  *          @arg @ref HAL_CRC_MSPDEINIT_CB_ID MspDeInit callback ID
+  * @param  pCallback pointer to the Callback function
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_CRC_RegisterCallback(CRC_HandleTypeDef *hcrc, HAL_CRC_CallbackIDTypeDef CallbackID, pCRC_CallbackTypeDef pCallback)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  if (pCallback == NULL)
+  {
+    return HAL_ERROR;
+  }
+  /* Process locked */
+  __HAL_LOCK(hcrc);
+
+  if ((HAL_CRC_STATE_READY == hcrc->State) ||
+      (HAL_CRC_STATE_RESET == hcrc->State))
+  {
+    switch (CallbackID)
+    {
+    case HAL_CRC_MSPINIT_CB_ID :
+      hcrc->MspInitCallback = pCallback;
+      break;
+
+    case HAL_CRC_MSPDEINIT_CB_ID :
+      hcrc->MspDeInitCallback = pCallback;
+      break;
+
+    default :
+     /* Return error status */
+      status =  HAL_ERROR;
+      break;
+    }
+  }
+  else
+  {
+    /* Return error status */
+    status =  HAL_ERROR;
+  }
+
+  /* Release Lock */
+  __HAL_UNLOCK(hcrc);
+  return status;
+}
+
+/**
+  * @brief  Unregister an CRC Callback
+  *         CRC callabck is redirected to the weak predefined callback
+  * @param  hcrc CRC handle
+  * @param  CallbackID ID of the callback to be unregistered
+  *         This parameter can be one of the following values:
+  *          @arg @ref HAL_CRC_MSPINIT_CB_ID MspInit callback ID
+  *          @arg @ref HAL_CRC_MSPDEINIT_CB_ID MspDeInit callback ID
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_CRC_UnRegisterCallback(CRC_HandleTypeDef *hcrc, HAL_CRC_CallbackIDTypeDef CallbackID)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Process locked */
+  __HAL_LOCK(hcrc);
+
+  if ((HAL_CRC_STATE_READY == hcrc->State) ||
+      (HAL_CRC_STATE_RESET == hcrc->State))
+  {
+    switch (CallbackID)
+    {
+    case HAL_CRC_MSPINIT_CB_ID :
+      hcrc->MspInitCallback = HAL_CRC_MspInit;              /* Legacy weak MspInit  */
+      break;
+
+    case HAL_CRC_MSPDEINIT_CB_ID :
+      hcrc->MspDeInitCallback = HAL_CRC_MspDeInit;          /* Legacy weak MspDeInit  */
+      break;
+
+    default :
+     /* Return error status */
+      status =  HAL_ERROR;
+      break;
+    }
+  }
+  else
+  {
+    /* Return error status */
+    status =  HAL_ERROR;
+  }
+
+  /* Release Lock */
+  __HAL_UNLOCK(hcrc);
+  return status;
+}
+
+#endif /* USE_HAL_CRC_REGISTER_CALLBACKS */
+
 /**
   * @}
   */
 
 /** @defgroup CRC_Exported_Functions_Group2 Peripheral Control functions
- *  @brief    management functions.
- *
+  *  @brief    management functions.
+  *
 @verbatim
  ===============================================================================
                       ##### Peripheral Control functions #####
@@ -385,8 +558,8 @@ uint32_t HAL_CRC_Calculate(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_t
   */
 
 /** @defgroup CRC_Exported_Functions_Group3 Peripheral State functions
- *  @brief    Peripheral State functions.
- *
+  *  @brief    Peripheral State functions.
+  *
 @verbatim
  ===============================================================================
                       ##### Peripheral State functions #####
@@ -418,8 +591,8 @@ HAL_CRC_StateTypeDef HAL_CRC_GetState(CRC_HandleTypeDef *hcrc)
   */
 
 /** @addtogroup CRC_Private_Functions
- * @{
- */
+  * @{
+  */
 
 /**
   * @brief  Enter 8-bit input data to the CRC calculator.
@@ -514,5 +687,3 @@ static uint32_t CRC_Handle_16(CRC_HandleTypeDef *hcrc, uint16_t pBuffer[], uint3
 /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

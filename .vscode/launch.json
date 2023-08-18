@@ -1,20 +1,39 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug (OpenOCD)",
-            "type": "cortex-debug",
-            "request": "launch",
-            "servertype": "openocd",
-            "executable": "./build/firmware.elf",
-            "device": "STM32F746ZGTx",
-            "svdFile": "${workspaceRoot}/STM32F7x6.svd",
-            "cwd": "${workspaceRoot}",
-            "interface": "swd",
-            "configFiles": [
-                "interface/stlink.cfg",
-                "target/stm32f7x.cfg"
-            ]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "cortex-debug",
+      // For humans in the VSCODE selection window give this a human friendly name
+      "name": "Debug (OpenOCD)",
+      // The cwd for debug sessions is the top of my source tree.
+      "cwd": "${workspaceRoot}/",
+      // Path from {workspaceRoot} to your ELF file it might be placed elsewhere.
+      "executable": ".build/firmware.elf",
+      "svdFile": "STM32F7x6.svd",
+      // This setting can be used to override the GDB path user/workspace setting for a particular launch configuration.
+      // "gdbPath": "/tools/Microchip/SoftConsole-v2021.1/riscv-unknown-elf-gcc/bin/riscv64-unknown-elf-gdb",
+      // This setting can be used to override the toolchainPrefix user setting for a particular launch configuration. Default = "arm-none-eabi"
+      // "toolchainPrefix": "/tools/Microchip/SoftConsole-v2021.1/riscv-unknown-elf-gcc/bin/riscv64-unknown-elf-",
+      // GDB Server type - supported types are jlink, openocd, pyocd, pe, stlink, stutil, qemu, bmp and external.
+      "servertype": "external",
+      // This can either be a "hostname:port" combination or path to a serial port
+      "gdbTarget": "host.docker.internal:4242",
+      // attach to a running target and halt (Handy if your code has hung)
+      // Hint: In the gdb prompt/console, type 3 commands: 
+      //   "load" to load your application, program counter will be at the reset vector.
+      //   "tbreak main" - sets a temporary breakpoint at main.
+      //   "continue" - target runs/executes-opcodes and should break at main.
+      //    Or - if you can step through (and debug) faulty startup code.
+      "request": "attach",
+      // Debug Interface type to use for connections (defaults to SWD) - Used for J-Link, ST-LINK and BMP probes.
+      "interface": "swd",
+      // OpenOCD/PE GDB Server configuration file(s) to use when debugging (OpenOCD -f option)
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32f7x.cfg"
+      ],
+      // Used to debug this extension. Prints all GDB responses to the console. 'raw' prints gdb responses, 'parsed' prints results after parsing, 'both' prints both. 'vscode' shows raw and VSCode interactions
+      // "showDevDebugOutput": "raw",
+    }
+  ]
 }

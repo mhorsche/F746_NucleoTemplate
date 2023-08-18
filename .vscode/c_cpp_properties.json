@@ -1,6 +1,54 @@
 {
     "configurations": [
         {
+            "name": "Docker",
+            "includePath": [
+                "/home/dev/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include",
+                "/home/dev/gcc-arm-none-eabi-10.3-2021.10/lib/gcc/arm-none-eabi/10.3.1/include",
+                "${workspaceFolder}/Inc",
+                "${workspaceFolder}/Drivers/BSP",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F7xx/Include",
+                "${workspaceFolder}/Drivers/STM32F7xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/portable/GCC/ARM_CM7/r0p1",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/CMSIS_RTOS_V2",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/logging",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/Compiler/GCC",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/NetworkInterface/include",
+                // "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/NetworkInterface/STM32Fxx",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/coreJSON/source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/coreMQTT-Agent/source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/mqtt-agent-interface/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/backoffAlgorithm/source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/coreMQTT/source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/coreMQTT/source/interface",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/network_transport/freertos_plus_tcp",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/network_transport/freertos_plus_tcp/using_plaintext"
+            ],
+            "intelliSenseMode": "gcc-x86",
+            "compilerPath": "/home/dev/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc",
+            "defines": [
+                "DEBUG",
+                "USE_HAL_DRIVER",
+                "USE_FULL_LL_DRIVER",
+                "USE_STM32F7XX_NUCLEO_144",
+                "STM32F7xx",
+                "STM32F746xx",
+                "FW_VERSION=\"vX.X.X\""
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
             "name": "Win32",
             "includePath": [
                 "C:\\Program Files (x86)\\GNU Tools Arm Embedded\\7 2018-q2-update\\arm-none-eabi\\include",
@@ -27,9 +75,11 @@
             ],
             "defines": [
                 "DEBUG",
+                "STM32F7xx",
                 "STM32F746xx",
                 "USE_STM32F7XX_NUCLEO_144",
-                "USE_HAL_DRIVER"
+                "USE_HAL_DRIVER",
+                "USE_FULL_LL_DRIVER"
             ],
             "intelliSenseMode": "msvc-x64",
             "browse": {
@@ -69,9 +119,11 @@
             ],
             "defines": [
                 "DEBUG",
+                "STM32F7xx",
                 "STM32F746xx",
                 "USE_STM32F7XX_NUCLEO_144",
-                "USE_HAL_DRIVER"
+                "USE_HAL_DRIVER",
+                "USE_FULL_LL_DRIVER"
             ],
             "intelliSenseMode": "gcc-x86",
             "compilerPath": "/usr/local/bin/arm-none-eabi-gcc",

@@ -24,9 +24,18 @@
             "problemMatcher": []
         },
         {
+            "label": "🛠️ Program (Remote GDB)",
+            "type": "shell",
+            "command": "arm-none-eabi-gdb -ex \"target remote host.docker.internal:4242\" -ex \"load\" --batch .build/firmware.elf",
+            "problemMatcher": [],
+            "dependsOn": [
+                "🔨 Build (GCC)"
+            ]
+        },
+        {
             "label": "🛠️ Program & Verfiy STM (OpenOCD)",
             "type": "shell",
-            "command": "openocd -f interface/stlink-v2.cfg -f target/stm32f7x.cfg -c \"program ./build/firmware.elf verify reset exit\"",
+            "command": "openocd -f interface/stlink-v2.cfg -f target/stm32f7x.cfg -c \"program .build/firmware.elf verify reset exit\"",
             "problemMatcher": []
         },
         {
