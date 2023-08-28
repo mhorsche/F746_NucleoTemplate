@@ -166,7 +166,7 @@ C_SOURCES +=  \
   Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/FreeRTOS_UDP_IP.c \
   Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/FreeRTOS_UDP_IPv4.c \
   Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/FreeRTOS_UDP_IPv6.c \
-	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/BufferManagement/BufferAllocation_2.c \
+	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/BufferManagement/BufferAllocation_1.c \
 	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/NetworkInterface/Common/phyHandling.c \
 	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/NetworkInterface/STM32/NetworkInterface.c
 # Middlewares/Third_Party/FreeRTOS/FreeRTOS-Plus-TCP/source/portable/NetworkInterface/STM32Fxx/stm32fxx_hal_eth.c 

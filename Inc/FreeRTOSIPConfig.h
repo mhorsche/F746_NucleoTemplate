@@ -215,7 +215,7 @@ extern "C"
  * to a pre-determinable value. */
 #define iptraceFAILED_TO_OBTAIN_NETWORK_BUFFER() configASSERT(1 == 0)
 
-#define ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS (64)
+#define ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS (41)
 
 /* A FreeRTOS queue is used to send events from application tasks to the IP
  * stack.  ipconfigEVENT_QUEUE_LENGTH sets the maximum number of events that can
@@ -368,7 +368,7 @@ UDP logging facility is used. */
 /* Set to 1 to print out debug messages.  If ipconfigHAS_DEBUG_PRINTF is set to
  * 1 then FreeRTOS_debug_printf should be defined to the function used to print
  * out the debugging messages. */
-#define ipconfigHAS_DEBUG_PRINTF 1
+#define ipconfigHAS_DEBUG_PRINTF (1)
 #if (ipconfigHAS_DEBUG_PRINTF == 1)
 #define FreeRTOS_debug_printf(X) vLoggingPrintf X
 #endif
@@ -377,7 +377,7 @@ UDP logging facility is used. */
  * FreeRTOS_netstat() command, and ping replies.  If ipconfigHAS_PRINTF is set to 1
  * then FreeRTOS_printf should be set to the function used to print out the
  * messages. */
-#define ipconfigHAS_PRINTF 1
+#define ipconfigHAS_PRINTF (1)
 #if (ipconfigHAS_PRINTF == 1)
 #define FreeRTOS_printf(X) vLoggingPrintf X
 #endif

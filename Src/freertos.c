@@ -48,24 +48,7 @@ static uint64_t ullHiresTime = 0;
 static volatile uint32_t ulHeapSize;
 static volatile uint8_t *pucHeapStart;
 
-#if defined(__IAR_SYSTEMS_ICC__)
-uint8_t heapMemory[100000];
-#else
-extern uint8_t __bss_end__, _estack, _Min_Stack_Size;
-#endif
-
-/* Private define ------------------------------------------------------------*/
-#if defined(__IAR_SYSTEMS_ICC__)
-#define HEAP_START heapMemory[0]
-#define HEAP_END heapMemory[sizeof heapMemory]
-#else
-#define HEAP_START __bss_end__
-#define HEAP_END _estack
-#endif
-
-/* Function prototypes -------------------------------------------------------*/
-
-/* Private function prototypes -----------------------------------------------*/
+extern uint8_t __bss_end__, _estack, _Min_Stack_Size; /* variables are defined in the Linker file "STM32F746ZGTx_FLASH.ld" */
 
 /******************************************************************************/
 /*                          Public/Exported Functions                         */
@@ -75,9 +58,9 @@ void vHeapInit(void)
 {
   uint32_t ulStackSize = (uint32_t) & (_Min_Stack_Size);
 
-  pucHeapStart = (uint8_t *)((((uint32_t)&HEAP_START) + 7) & ~0x07ul);
+  pucHeapStart = (uint8_t *)((((uint32_t)&__bss_end__) + 7) & ~0x07ul);
 
-  ulHeapSize = (uint32_t)(&HEAP_END - &HEAP_START);
+  ulHeapSize = (uint32_t)(&_estack - &__bss_end__);
   ulHeapSize &= ~0x07ul;
   ulHeapSize -= ulStackSize;
 
