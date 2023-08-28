@@ -51,8 +51,7 @@ static volatile uint8_t *pucHeapStart;
 #if defined(__IAR_SYSTEMS_ICC__)
 uint8_t heapMemory[100000];
 #else
-extern uint8_t __bss_end__,
-    _estack, _Min_Stack_Size;
+extern uint8_t __bss_end__, _estack, _Min_Stack_Size;
 #endif
 
 /* Private define ------------------------------------------------------------*/
@@ -82,11 +81,11 @@ void vHeapInit(void)
   ulHeapSize &= ~0x07ul;
   ulHeapSize -= ulStackSize;
 
-  // HeapRegion_t xHeapRegions[] = {
-  //     {(unsigned char *)pucHeapStart, ulHeapSize},
-  //     {NULL, 0}};
+  HeapRegion_t xHeapRegions[] = {
+      {(unsigned char *)pucHeapStart, ulHeapSize},
+      {NULL, 0}};
 
-  // vPortDefineHeapRegions(xHeapRegions);
+  vPortDefineHeapRegions(xHeapRegions);
 }
 /*-----------------------------------------------------------*/
 

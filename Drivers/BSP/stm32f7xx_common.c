@@ -10,7 +10,7 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "stm32f7xx_common.h"
 
 #ifdef EEPROM_MODULE
 #include "Components/eeprom/eeprom.h"

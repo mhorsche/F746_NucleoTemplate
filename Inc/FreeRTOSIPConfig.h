@@ -40,8 +40,6 @@ extern "C"
 {
 #endif
 
-#include "stm32f7xx_common.h"
-
 /* Define names that will be used for DNS, LLMNR and NBNS searches. */
 #define mainHOST_NAME "stm32-nucleo"
 #define mainDEVICE_NICK_NAME "stm"

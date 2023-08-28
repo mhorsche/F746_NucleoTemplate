@@ -28,63 +28,44 @@
 #ifndef __LOGGING_H
 #define __LOGGING_H
 
+/******************************************************************************/
+/*                          Initialize Logging Stack                          */
+/*                     DO NOT CHANGE the following order                      */
+/* Include header files and define logging macros in the following order:     */
+/* 1. Include the header file "logging_levels.h".                             */
+/* 2. Define the LIBRARY_LOG_NAME and LIBRARY_LOG_LEVEL macros.               */
+/* 3. Include the header file "logging_stack.h".                              */
+/******************************************************************************/
+
+/* 1. Include the header file "logging_levels.h". */
+// #include "logging_levels.h"
+
+/* 2. Define the LIBRARY_LOG_NAME and LIBRARY_LOG_LEVEL macros. */
+// #ifndef LIBRARY_LOG_NAME
+// #define LIBRARY_LOG_NAME "LOG"
+// #endif
+
+// #ifndef LIBRARY_LOG_LEVEL
+// #define LIBRARY_LOG_LEVEL LOG_INFO
+// #endif
+
+// #ifndef ipconfigHAS_DEBUG_PRINTF
+// #define ipconfigHAS_DEBUG_PRINTF 1
+// #endif
+
+/* 3. Include the header file "logging_stack.h". */
+// #include "logging_stack.h"
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
 /* FreeRTOS includes. */
 #include <FreeRTOS.h> /* BaseType_t */
-#include <FreeRTOS_IP.h>
-
-/* Exported defines ----------------------------------------------------------*/
-
-/* Exported constants --------------------------------------------------------*/
-
-/**************************************************/
-/******* DO NOT CHANGE the following order ********/
-/**************************************************/
-
-/* Include logging header files and define logging macros in the following order:
- * 1. Include the header file "logging_levels.h".
- * 2. Define the LIBRARY_LOG_NAME and LIBRARY_LOG_LEVEL macros depending on
- * the logging configuration for DEMO.
- * 3. Include the header file "logging_stack.h", if logging is enabled for DEMO.
- */
-
-#include "logging_levels.h"
-
-/* Logging configuration for the Demo. */
-#ifndef LIBRARY_LOG_NAME
-#define LIBRARY_LOG_NAME "F746"
-#endif
-
-#ifndef LIBRARY_LOG_LEVEL
-#define LIBRARY_LOG_LEVEL LOG_INFO
-#endif
-
-#ifndef ipconfigHAS_DEBUG_PRINTF
-#define ipconfigHAS_DEBUG_PRINTF 1
-#endif
-
-/* Prototype for the function used to print to console on Windows simulator
- * of FreeRTOS.
- * The function prints to the console before the network is connected;
- * then a UDP port after the network has connected. */
-extern void vLoggingPrintf(const char *pcFormatString,
-                           ...);
-
-/* Map the SdkLog macro to the logging function to enable logging
- * on Windows simulator. */
-#ifndef SdkLog
-#define SdkLog(message) vLoggingPrintf message
-#endif
-
-#include "logging_stack.h"
-
-/************ End of logging configuration ****************/
 
 /* Exported functions ------------------------------------------------------- */
-/*
- * Initialize a logging system that can be used from FreeRTOS tasks.  Do not
+
+/**
+ * @brief Initialize a logging system that can be used from FreeRTOS tasks.  Do not
  * call printf() directly while the scheduler is running.
  *
  * Set xLogToUART, xLogToSWO and xLogToUDP to either pdTRUE or pdFALSE to
@@ -100,10 +81,10 @@ void vLoggingInit(BaseType_t xLogToUART,
                   uint16_t usRemotePort);
 
 /**
- * Set ulRemoteIPAddress and usRemotePort must be set to the IP address and port
+ * @brief Set ulRemoteIPAddress and usRemotePort must be set to the IP address and port
  * number to which UDP log messages will be sent.
  */
-void vSetUDPAddress(const uint8_t ucRemoteIPAddress[ipIP_ADDRESS_LENGTH_BYTES],
+void vSetUDPAddress(uint32_t ulRemoteIPAddress,
                     const uint16_t usRemotePort);
 
 /**
@@ -120,4 +101,4 @@ void vSetUDPAddress(const uint8_t ucRemoteIPAddress[ipIP_ADDRESS_LENGTH_BYTES],
 void vLoggingPrintf(const char *pcFormat,
                     ...);
 
-#endif /* DEMO_LOGGING_H */
+#endif /* __LOGGING_H */

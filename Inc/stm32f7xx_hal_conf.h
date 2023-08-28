@@ -198,10 +198,10 @@ extern "C"
 
   /* Section 1 : Ethernet peripheral configuration */
 
-/**                                                                                                                                 \
- * @brief MAC address is defined by FreeRTOS+TCP in 'FreeRTOSIPConfig.h':                                                           \
- *        { ipconfigMAC_ADDR0 : ipconfigMAC_ADDR1 : ipconfigMAC_ADDR2 : ipconfigMAC_ADDR3 : ipconfigMAC_ADDR4 : ipconfigMAC_ADDR5 } \
- */                                                                                                                                 \
+/**
+ * @brief MAC address is defined by FreeRTOS+TCP in 'FreeRTOSIPConfig.h':
+ *        { ipconfigMAC_ADDR0 : ipconfigMAC_ADDR1 : ipconfigMAC_ADDR2 : ipconfigMAC_ADDR3 : ipconfigMAC_ADDR4 : ipconfigMAC_ADDR5 }
+ */
 #define MAC_ADDR0 2U
 #define MAC_ADDR1 0U
 #define MAC_ADDR2 0U
@@ -210,10 +210,10 @@ extern "C"
 #define MAC_ADDR5 0U
 
 /* Definition of the Ethernet driver buffers size and count */
-#define ETH_RX_BUF_SIZE (/* ipconfigNETWORK_MTU */ 1500 + 36) /* buffer size for receive               */
-#define ETH_TX_BUF_SIZE (/* ipconfigNETWORK_MTU */ 1500 + 36) /* buffer size for transmit              */
-#define ETH_RX_DESC_CNT ((uint32_t)4U)                        /* 4 Rx buffers of size ETH_RX_BUF_SIZE  */
-#define ETH_TX_DESC_CNT ((uint32_t)2U)                        /* 2 Tx buffers of size ETH_TX_BUF_SIZE  */
+#define ETH_RX_BUF_SIZE (1500 + 36U /* ipconfigNETWORK_MTU + ipSIZE_OF_ETH_HEADER */) /* buffer size for receive */
+#define ETH_TX_BUF_SIZE (1500 + 36U /* ipconfigNETWORK_MTU + ipSIZE_OF_ETH_HEADER */) /* buffer size for transmit */
+#define ETH_RX_DESC_CNT ((uint32_t)4U)                                                /* 4 Rx buffers of size ETH_RX_BUF_SIZE */
+#define ETH_TX_DESC_CNT ((uint32_t)2U)                                                /* 2 Tx buffers of size ETH_TX_BUF_SIZE */
 
 /* Section 2: PHY configuration section */
 /* LAN8742A PHY Address*/

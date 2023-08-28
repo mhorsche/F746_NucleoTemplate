@@ -74,7 +74,7 @@
 
 /*-----------------------------------------------------------*/
 
-#define EMAC_DATA_BUFFER_SIZE    ( ipconfigNETWORK_MTU + ipSIZE_OF_ETH_HEADER )
+#define EMAC_DATA_BUFFER_SIZE     ( ETH_RX_BUF_SIZE ) //( ipconfigNETWORK_MTU + ipSIZE_OF_ETH_HEADER ) /* Same as ETH_RX_BUF_SIZE @see https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/pull/804#issuecomment-1694861531 */
 #define EMAC_TOTAL_BUFFER_SIZE    ( ( EMAC_DATA_BUFFER_SIZE + ipBUFFER_PADDING + 31U ) & ~0x1FuL )
 
 #define EMAC_IF_RX_EVENT    1UL
@@ -606,7 +606,7 @@ static void prvEMACHandlerTask( void * pvParameters )
 
     for( ;; )
     {
-        BaseType_t xResult = 0U;
+        BaseType_t xResult = 0U, xForceAndSkipTimeout = 0U;
         uint32_t ulISREvents = 0U;
 
         if ( xTaskNotifyWait( 0U, EMAC_IF_ALL_EVENT, &ulISREvents, pdMS_TO_TICKS( 100UL ) ) == pdTRUE )
@@ -688,7 +688,7 @@ static void prvEMACHandlerTask( void * pvParameters )
             }
         }
 
-        if( xPhyCheckLinkStatus( &xPhyObject, xResult ) != pdFALSE )
+        if( xPhyCheckLinkStatus( &xPhyObject, xResult, xForceAndSkipTimeout ) != pdFALSE )
         {
             prvEthernetUpdateConfig();
 

@@ -32,7 +32,6 @@
 
 /* Logging includes. */
 #include "freertos_task_logging.h"
-#include "logging_levels.h"
 
 /* Private define ------------------------------------------------------------*/
 
@@ -108,7 +107,8 @@ static void prvLoggingPrintf(const char *pcFormat, va_list xArgs);
 void vLoggingInit(BaseType_t xLogToUART,
                   BaseType_t xLogToSWO,
                   BaseType_t xLogToUDP,
-                  uint32_t ulRemoteIPAddress, uint16_t usRemotePort)
+                  uint32_t ulRemoteIPAddress,
+                  uint16_t usRemotePort)
 {
   /* Can only be called before the scheduler has started. */
   configASSERT(xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED);
@@ -180,15 +180,15 @@ void vLoggingInit(BaseType_t xLogToUART,
 }
 /*-----------------------------------------------------------*/
 
-void vSetUDPAddress(const uint8_t ucRemoteIPAddress[ipIP_ADDRESS_LENGTH_BYTES],
+void vSetUDPAddress(uint32_t ulRemoteIPAddress,
                     const uint16_t usRemotePort)
 {
   /* Enable UDP logging in any case. */
   xUDPLoggingUsed = pdTRUE;
 
   /* Set the address to which the print messages are sent. */
-  xPrintUDPAddress.sin_addr = FreeRTOS_inet_addr_quick(ucRemoteIPAddress[0], ucRemoteIPAddress[1], ucRemoteIPAddress[2], ucRemoteIPAddress[3]);
   xPrintUDPAddress.sin_port = FreeRTOS_htons(usRemotePort);
+  xPrintUDPAddress.sin_addr = ulRemoteIPAddress;
 }
 /*-----------------------------------------------------------*/
 

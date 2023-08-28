@@ -66,8 +66,6 @@ C_SOURCES =  \
 C_SOURCES +=  \
 	Drivers/BSP/stm32f7xx_common.c \
 	Drivers/BSP/Components/stlink/stlink.c \
-	
-# Drivers/BSP/STM32F7xx_Nucleo_144/stm32f7xx_nucleo_144.c \
 
 # FreeRTOS User Tasks
 C_SOURCES +=  \
@@ -115,7 +113,7 @@ C_SOURCES +=  \
 	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/stream_buffer.c \
 	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/tasks.c \
 	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/timers.c \
-	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/portable/MemMang/heap_4.c \
+	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/portable/MemMang/heap_5.c \
 	Middlewares/Third_Party/FreeRTOS/FreeRTOS-Kernel/portable/GCC/ARM_CM7/r0p1/port.c 	
 # Middlewares/Third_Party/FreeRTOS/CMSIS_RTOS_V2/cmsis_os2.c \
 

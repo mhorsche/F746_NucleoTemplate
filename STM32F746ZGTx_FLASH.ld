@@ -38,7 +38,7 @@ _estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 8K;  /* required amount of heap */
-_Min_Stack_Size = 4K; /* required amount of s tack */
+_Min_Stack_Size = 4K; /* required amount of stack */
 
 /* Memories definition */
 MEMORY

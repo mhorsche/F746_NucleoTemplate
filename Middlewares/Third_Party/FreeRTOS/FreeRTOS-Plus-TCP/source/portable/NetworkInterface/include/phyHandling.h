@@ -148,7 +148,15 @@
  * 'xHadReception' : make this true if a packet has been received since the
  * last call to this function. */
     BaseType_t xPhyCheckLinkStatus( EthernetPhy_t * pxPhyObject,
-                                    BaseType_t xHadReception );
+                                    BaseType_t xHadReception,
+                                    BaseType_t xForceAndSkipTimeout );
+
+    BaseType_t xPhyPrintRegisters(EthernetPhy_t *pxPhyObject);
+    BaseType_t xPhySetInterruptMode(EthernetPhy_t *pxPhyObject, BaseType_t xInterruptMode);
+    BaseType_t xPhySetMagicPacketDetection(EthernetPhy_t *pxPhyObject, uint8_t *pucMACAddress);
+    BaseType_t xPhyHandleInterrupt(EthernetPhy_t *pxPhyObject,
+                                   uint32_t *pulISFR,
+                                   uint32_t *pulWUCSR);
 
 /* Get the bitmask of a given 'EthernetPhy_t'. */
     #define xPhyGetMask( pxPhyObject ) \

@@ -6,27 +6,14 @@
  * @date 2023-08-11
  *
  * @copyright Copyright (c) 2023
- *
  */
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Standard includes. */
-#include <time.h>
-
 /* FreeRTOS includes. */
-#include <FreeRTOS.h>
-#include "task.h"
-#include "timers.h"
-#include "queue.h"
-#include "semphr.h"
-
-/* FreeRTOS+TCP includes. */
+#include <FreeRTOS.h> /* BaseType_t */
 #include <FreeRTOS_IP.h>
-#include <FreeRTOS_Sockets.h>
-#include <FreeRTOS_DHCP.h>
-#include "NetworkInterface.h"
 
 /* Utilities includes. */
 #include "freertos_task_logging.h"

@@ -41,6 +41,10 @@
 #include "main.h"
 
 /* Exported functions --------------------------------------------------------*/
+
+/**
+ * @brief Initialize a simple LED task.
+ */
 void vLEDTaskInstall(void);
 
 #endif /* __FREERTOS_TASK_LED_H */
